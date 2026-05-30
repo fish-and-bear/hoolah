@@ -43,30 +43,37 @@ export default function About() {
           the word list
         </h2>
         <p className="mb-4">
-          The answer list is curated by hand. Every word in it is a real
-          everyday Tagalog word, verified from common-knowledge usage and
-          standard dictionaries. The list ships small on purpose. A short list
-          of words you can actually defend beats a long list with one or two
-          inventions buried inside it.
+          v1 ships 154 daily-answer words and 425 extra accepted guesses, all
+          hand-curated. No corpus extraction, no scraped dictionary. The
+          source is one Filipino speaker (the author) writing words she
+          actually uses, checked against the orthography rule and the
+          dictionaries she keeps for her linguistics work. A short list you
+          can defend end-to-end beats a long list with inventions buried
+          inside it.
         </p>
         <p className="mb-4">
-          The acceptable-guess list is broader. It contains plausible
-          five-letter Tagalog words you might reach for during play, even if
-          they are not in the daily-answer rotation. Loanwords from Spanish
-          and English that have become standard Tagalog (kotse, plato, papel,
-          karne) are accepted; words that have never naturalised are not.
+          The full provenance — where each word came from, what criteria it
+          had to meet, what the list is explicitly not, and how to suggest a
+          missing word — lives in{' '}
+          <a
+            href="https://github.com/fish-and-bear/hoolah/blob/main/docs/CORPUS.md"
+            target="_blank"
+            rel="noreferrer"
+          >
+            docs/CORPUS.md
+          </a>
+          . Read it before opening an issue.
         </p>
         <p className="mb-4">
-          The alphabet is the 26-letter modern Filipino set. No ñ, no
-          diacritics on tiles. That is a deliberate v1 simplification — the
-          full orthography includes both, and a later release may add a
-          separate diacritic-aware mode. Until then, take it as a constraint
-          like Wordle's English-only one: it makes the daily a tighter puzzle,
-          not a comprehensive dictionary exercise.
+          The acceptable-guess list is broader than the daily-answer set.
+          Naturalised loanwords from Spanish (kotse, plato, papel, karne) are
+          accepted; recent English loans that have not naturalised are not.
+          The alphabet is the 26-letter modern Filipino set; no ñ, no
+          diacritics on tiles. A later release may add a diacritic-aware
+          mode.
         </p>
         <p className="mb-4">
-          The list will grow. Suggestions for additions, removals, or
-          corrections go to{' '}
+          Suggestions for additions, removals, or corrections go to{' '}
           <a
             href="https://github.com/fish-and-bear/hoolah/issues"
             target="_blank"
@@ -74,7 +81,7 @@ export default function About() {
           >
             the GitHub issue tracker
           </a>
-          . If you flag a word, please cite a source.
+          . Please cite a source.
         </p>
 
         <h2 className="font-serif text-2xl font-bold mt-8 mb-3">
@@ -112,9 +119,17 @@ export default function About() {
           >
             Angelica Naguio
           </a>
-          , whose published work on Filipino morphology (PACLIC 38, Tokyo) was
-          the original reason for caring about a clean five-letter Tagalog
-          dataset. The codebase is MIT-licensed and lives at{' '}
+          . Her published work on Filipino morphology —{' '}
+          <a
+            href="https://aclanthology.org/2024.paclic-1.64/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Comparative Analysis of Tagalog Stemmers (PACLIC 38, Tokyo)
+          </a>
+          {' '}— is the reason she cared about a clean five-letter Tagalog
+          dataset enough to type one out by hand. The codebase is MIT-licensed
+          and lives at{' '}
           <a
             href="https://github.com/fish-and-bear/hoolah"
             target="_blank"

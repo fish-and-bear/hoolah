@@ -57,9 +57,9 @@ Manila time (`Asia/Manila`, UTC+8, no DST) is computed in the browser via `Intl.
 
 ## Word lists
 
-The answer list (`src/data/answers.json`) is hand-verified Tagalog. Every entry includes the part of speech and an English gloss. The acceptable-guess list (`src/data/guesses.json`) is broader and contains plausible five-letter Tagalog words a player might reach for. Latin alphabet, lowercase a-z only (no ñ, no diacritics) for v1 simplicity.
+The answer list (`src/data/answers.json`) is hand-curated Tagalog: 154 entries, each with a part of speech and a one-line English gloss. The acceptable-guess list (`src/data/guesses.json`) adds 425 more 5-letter Tagalog words a player might reach for during play. Latin alphabet, lowercase a-z only — no ñ, no diacritics — for v1 simplicity.
 
-Corrections and additions go through GitHub issues. Please cite a source if you propose adding or removing a word.
+The full provenance, criteria, and contribution path are documented in [docs/CORPUS.md](./docs/CORPUS.md). Read that before opening an issue to suggest a word.
 
 ## Deployment
 
