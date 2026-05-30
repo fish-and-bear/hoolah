@@ -10,7 +10,7 @@
   --hoolah-gold: #d4a24c;
 
   /* Tile colours. Sage green is intentionally desaturated; the
-     'Filipino flag green' is too bright for a serious editorial board. */
+     "Filipino flag green" is too bright for a serious editorial board. */
   --hoolah-correct: #4f7942;
   --hoolah-present: #c8a04c;
   --hoolah-absent: #3a3a3a;
@@ -147,6 +147,12 @@ button {
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+@keyframes barPulse {
+  0%   { transform: scaleX(0.92); transform-origin: left center; filter: brightness(1.18); }
+  55%  { transform: scaleX(1);    transform-origin: left center; filter: brightness(1.08); }
+  100% { transform: scaleX(1);    transform-origin: left center; filter: brightness(1); }
 }
 
 /* Visually-hidden, still announced by screen readers. */

@@ -267,7 +267,7 @@ export default function Game() {
         const nextGuesses = [...snapshot.guesses, current];
         const rowIdx = snapshot.guesses.length;
         setRevealingRow(rowIdx);
-        const flipMs = rowIdx * 280 + 300 + 80;
+        const flipMs = rowIdx * 280 + 300 + 80; // last tile's flip end + small buffer
         const won = isWin(judged);
         const lost = !won && nextGuesses.length >= MAX_GUESSES;
         const status = won ? 'won' : lost ? 'lost' : 'in-progress';
@@ -288,8 +288,13 @@ export default function Game() {
             window.setTimeout(() => setBouncingRow(null), 700);
           }
           if (status !== 'in-progress') {
+            // Daily-only AND only after the launch epoch: free-play games
+            // are already excluded by mode, but pre-launch games carry
+            // mode='daily' with puzzleNumber=null (the label is "preview"
+            // in that case) and must not pollute the histogram either.
             if (
               nextSnapshot.mode === 'daily' &&
+              nextSnapshot.puzzleNumber !== null &&
               !recordedKeys.current.has(nextSnapshot.key)
             ) {
               recordedKeys.current.add(nextSnapshot.key);
@@ -358,6 +363,7 @@ export default function Game() {
   }, [settings.hardMode]);
 
   if (!mounted || !snapshot || !puzzle) {
+    // Skeleton: same vertical rhythm as the game, no flash on hydration.
     return (
       <main className="flex-1 flex items-center justify-center px-4 py-10">
         <div className="opacity-30 font-serif italic text-4xl">hoolah</div>
@@ -388,9 +394,11 @@ export default function Game() {
         style={{ color: 'var(--hoolah-muted)' }}
       >
         <p className="text-[0.7rem] uppercase tracking-[0.18em]">
-          {puzzle.mode === 'daily' && puzzle.puzzleNumber != null
-            ? `hoolah ${puzzle.puzzleNumber.toString().padStart(3, '0')}`
-            : 'free play'}
+          {puzzle.mode === 'free'
+            ? 'free play'
+            : puzzle.puzzleNumber != null
+              ? `hoolah ${puzzle.puzzleNumber.toString().padStart(3, '0')}`
+              : 'preview'}
         </p>
         <div className="flex items-center gap-1">
           <button
@@ -447,7 +455,9 @@ export default function Game() {
         entry={entryByWord.get(snapshot.answer) ?? puzzle.entry}
         stats={stats}
         dark={dark}
-        onPlayFreeGame={startFreeGame}
+        onPlayFreeGame={
+          snapshot.mode === 'free' ? startFreeGame : startFreeGame
+        }
         newFreeGameLabel={snapshot.mode === 'free' ? 'Another word' : undefined}
       />
 
@@ -456,6 +466,7 @@ export default function Game() {
         onClose={() => setSettingsOpen(false)}
         settings={settings}
         onChange={(next) => {
+          // Block hard-mode toggle mid-daily-game.
           if (
             next.hardMode !== settings.hardMode &&
             snapshot.mode === 'daily' &&
@@ -470,6 +481,7 @@ export default function Game() {
             snapshot.status === 'in-progress' &&
             snapshot.guesses.length === 0
           ) {
+            // Apply the new hard-mode setting to the fresh snapshot.
             setSnapshot({ ...snapshot, hardMode: next.hardMode });
           }
         }}

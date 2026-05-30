@@ -143,7 +143,13 @@ export default function EndModal({
 
         <StatsPanel
           stats={stats}
-          highlight={won ? snapshot.guesses.length : null}
+          highlight={
+            won &&
+            snapshot.mode === 'daily' &&
+            snapshot.puzzleNumber !== null
+              ? snapshot.guesses.length
+              : null
+          }
         />
 
         {!won && stats.currentStreak === 0 && stats.maxStreak >= 3 ? (
