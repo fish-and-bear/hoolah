@@ -408,7 +408,10 @@ export default function Game() {
   }
 
   return (
-    <>
+    <div
+      className="flex-1 flex flex-col"
+      style={{ animation: 'boardEnter 220ms ease-out' }}
+    >
       <div
         className="flex items-center justify-between px-3 sm:px-4 pt-2 pb-1"
         style={{ color: 'var(--hoolah-muted)' }}
