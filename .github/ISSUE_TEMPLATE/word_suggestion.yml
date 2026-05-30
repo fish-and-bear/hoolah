@@ -1,0 +1,54 @@
+name: Word suggestion
+description: Suggest a Tagalog word for the answer or accepted-guess list.
+title: "[word]: "
+labels:
+  - wordlist
+body:
+  - type: input
+    id: word
+    attributes:
+      label: Word
+      description: Exactly five lowercase a-z letters.
+      placeholder: aklat
+    validations:
+      required: true
+  - type: dropdown
+    id: list
+    attributes:
+      label: Proposed list
+      options:
+        - Daily answer candidate
+        - Accepted guess only
+    validations:
+      required: true
+  - type: input
+    id: pos
+    attributes:
+      label: Part of speech
+      description: Required for daily answer candidates.
+      placeholder: n, v, adj, adv
+  - type: input
+    id: gloss
+    attributes:
+      label: One-line English gloss
+      description: Required for daily answer candidates.
+      placeholder: book
+  - type: textarea
+    id: citation
+    attributes:
+      label: Citation
+      description: Link a dictionary entry, Wiktionary page, news/literary use, or textbook/reference.
+      placeholder: https://...
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: The word is exactly five letters and uses only lowercase a-z.
+          required: true
+        - label: The spelling follows modern Filipino orthography.
+          required: true
+        - label: I checked that the word is not already accepted in the game.
+          required: true

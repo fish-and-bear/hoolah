@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
+import { LanguageSegments } from '@/components/i18n/LanguageToggle';
+import { COPY } from '@/lib/i18n';
 import type { Settings } from '@/lib/types';
 
 interface SettingsProps {
@@ -10,9 +12,6 @@ interface SettingsProps {
   onChange: (next: Settings) => void;
   // Disabled when the player has started guessing today's puzzle.
   hardModeLocked?: boolean;
-  onFreePlay?: () => void;
-  freePlayActive: boolean;
-  onResumeDaily?: () => void;
 }
 
 export default function SettingsModal({
@@ -21,10 +20,9 @@ export default function SettingsModal({
   settings,
   onChange,
   hardModeLocked,
-  onFreePlay,
-  freePlayActive,
-  onResumeDaily,
 }: SettingsProps) {
+  const copy = COPY[settings.locale];
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -54,18 +52,21 @@ export default function SettingsModal({
         style={{
           background: 'var(--hoolah-modal-bg)',
           color: 'var(--hoolah-fg)',
+          maxHeight: '92dvh',
+          overflowY: 'auto',
+          paddingBottom: 'calc(env(safe-area-inset-bottom) + 2rem)',
           animation: 'fadeIn 180ms ease-out',
         }}
       >
         <div className="flex items-start justify-between">
           <h2 id="settings-title" className="font-serif text-2xl font-bold">
-            settings
+            {copy.settings.title}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="close"
-            className="text-2xl leading-none px-2 py-1 -mt-1 -mr-2"
+            aria-label={copy.common.close}
+            className="-mr-3 -mt-3 inline-flex min-h-11 min-w-11 items-center justify-center rounded text-2xl leading-none"
             style={{ color: 'var(--hoolah-muted)', background: 'transparent' }}
           >
             ×
@@ -73,65 +74,49 @@ export default function SettingsModal({
         </div>
 
         <Row
-          title="Hard mode"
-          sub="Revealed letters must be used in every later guess."
+          title={copy.settings.language}
+          sub={copy.settings.languageSub}
+        >
+          <LanguageSegments
+            locale={settings.locale}
+            label={copy.languageToggle.label}
+            onChange={(v) => set('locale', v)}
+          />
+        </Row>
+
+        <Row
+          title={copy.settings.hardMode}
+          sub={copy.settings.hardModeSub}
           disabled={hardModeLocked}
-          disabledNote="Finish today's puzzle to change this."
+          disabledNote={copy.settings.hardModeLocked}
         >
           <Toggle
             checked={settings.hardMode}
             onChange={(v) => set('hardMode', v)}
-            label="hard mode"
+            label={copy.settings.hardMode}
             disabled={hardModeLocked}
           />
         </Row>
 
-        <Row title="Dark mode" sub="Inverted oxblood; gold accent.">
+        <Row title={copy.settings.darkMode} sub={copy.settings.darkModeSub}>
           <Toggle
             checked={settings.theme === 'dark'}
             onChange={(v) => set('theme', v ? 'dark' : 'light')}
-            label="dark mode"
+            label={copy.settings.darkMode}
           />
         </Row>
 
-        <Row title="Reduced motion" sub="Skip tile flips, shake, bounce.">
+        <Row
+          title={copy.settings.reducedMotion}
+          sub={copy.settings.reducedMotionSub}
+        >
           <Toggle
             checked={settings.reducedMotion}
             onChange={(v) => set('reducedMotion', v)}
-            label="reduced motion"
+            label={copy.settings.reducedMotion}
           />
         </Row>
 
-        <div
-          className="pt-3 mt-1 border-t flex items-center justify-between gap-3"
-          style={{ borderColor: 'var(--hoolah-rule)' }}
-        >
-          <div>
-            <p className="font-medium">
-              {freePlayActive ? 'Daily puzzle' : 'Free play'}
-            </p>
-            <p
-              className="text-xs"
-              style={{ color: 'var(--hoolah-muted)' }}
-            >
-              {freePlayActive
-                ? 'Return to today\u2019s puzzle.'
-                : 'Random word, no stats, no streak.'}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={freePlayActive ? onResumeDaily : onFreePlay}
-            className="px-3 py-2 rounded text-sm font-medium"
-            style={{
-              background: 'var(--hoolah-key-bg)',
-              color: 'var(--hoolah-fg)',
-              border: 0,
-            }}
-          >
-            {freePlayActive ? 'Back to daily' : 'Play random'}
-          </button>
-        </div>
       </div>
     </div>
   );
@@ -187,25 +172,32 @@ function Toggle({
       aria-label={label}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className="rounded-full"
+      className="relative inline-flex min-h-11 min-w-14 items-center justify-center rounded-full"
       style={{
-        width: 44,
-        height: 24,
-        background: checked
-          ? 'var(--hoolah-accent)'
-          : 'var(--hoolah-key-bg)',
-        position: 'relative',
+        background: 'transparent',
         border: 0,
         cursor: disabled ? 'default' : 'pointer',
         opacity: disabled ? 0.5 : 1,
-        transition: 'background-color 120ms linear',
       }}
     >
       <span
+        aria-hidden="true"
         style={{
           position: 'absolute',
-          top: 3,
-          left: checked ? 23 : 3,
+          width: 44,
+          height: 24,
+          borderRadius: 999,
+          background: checked
+            ? 'var(--hoolah-accent)'
+            : 'var(--hoolah-key-bg)',
+          transition: 'background-color 120ms linear',
+        }}
+      />
+      <span
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          left: checked ? 'calc(50% + 1px)' : 'calc(50% - 19px)',
           width: 18,
           height: 18,
           borderRadius: '50%',

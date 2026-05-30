@@ -9,7 +9,7 @@ const answers = JSON.parse(readFileSync(answersPath, 'utf8'));
 // NOTE: this script must always match the production indexing logic in
 // src/lib/daily.ts. If you change one, change the other. Both use a
 // seeded Fisher-Yates shuffle with the seed string
-// 'hoolah:v1:permutation' — see daily.ts for why that string is fixed.
+// 'hoolah:v1:permutation'. See daily.ts for why that string is fixed.
 
 function fnv1a(str) {
   let hash = 0x811c9dc5;
@@ -50,10 +50,11 @@ function answerIndexFor(puzzleNumber, answerCount) {
   return order[(puzzleNumber - 1) % answerCount];
 }
 
-const EPOCH = new Date('2026-06-01T00:00:00+08:00');
+const EPOCH_DATE = '2026-05-30';
+const EPOCH = new Date(`${EPOCH_DATE}T00:00:00+08:00`);
 const DAYS = Number(process.argv[2] ?? 60);
 
-console.log(`# Next ${DAYS} hoolah puzzles (epoch 2026-06-01, Asia/Manila)`);
+console.log(`# Next ${DAYS} hoolah puzzles (epoch ${EPOCH_DATE}, Asia/Manila)`);
 console.log('');
 console.log('puzzle | date       | word     | gloss');
 console.log('-------+------------+----------+--------------------------------------');

@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  /* Brand palette — locked. */
+  /* Brand palette: locked. */
   --hoolah-oxblood: #5b0e11;
   --hoolah-ivory: #f4ede3;
   --hoolah-ink: #0e0e0e;
@@ -158,8 +158,64 @@ button {
   font-family: var(--font-serif), 'EB Garamond', Georgia, serif;
   font-style: italic;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   line-height: 1;
+}
+
+.prose-style {
+  line-height: 1.65;
+  overflow-wrap: break-word;
+}
+
+.prose-style h1,
+.prose-style h2 {
+  text-wrap: balance;
+}
+
+.prose-style p {
+  max-width: 68ch;
+}
+
+.prose-style a {
+  overflow-wrap: anywhere;
+}
+
+.hoolah-board {
+  max-width: min(360px, 90vw);
+}
+
+@media (max-height: 680px) {
+  .hoolah-game-main {
+    gap: 0.75rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .hoolah-board {
+    max-width: min(300px, 88vw, 42dvh);
+  }
+}
+
+@media (max-height: 600px) {
+  .hoolah-board {
+    max-width: min(280px, 86vw, 40dvh);
+  }
+}
+
+@media (max-width: 360px) {
+  .hoolah-keyboard {
+    gap: 5px;
+  }
+
+  .hoolah-keyboard > div {
+    gap: 3px;
+  }
+}
+
+@supports (text-wrap: pretty) {
+  .prose-style p {
+    text-wrap: pretty;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -227,7 +283,7 @@ button {
   }
 }
 
-/* Cold-start title screen — the wordmark rises into place rather than
+/* Cold-start title screen: the wordmark rises into place rather than
    appearing flat. Subtle enough to read as "the brand introduced
    itself" rather than as a load animation. */
 @keyframes titleEnter {

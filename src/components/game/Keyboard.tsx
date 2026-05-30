@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useMemo } from 'react';
+import { COPY } from '@/lib/i18n';
+import type { Locale } from '@/lib/types';
 
 const ROWS = [
   ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
@@ -18,13 +20,16 @@ interface KeyboardProps {
   onKey: (key: string) => void;
   letterStates: Record<string, 'correct' | 'present' | 'absent'>;
   disabled?: boolean;
+  locale: Locale;
 }
 
 export default function Keyboard({
   onKey,
   letterStates,
   disabled,
+  locale,
 }: KeyboardProps) {
+  const copy = COPY[locale].keyboard;
   // Physical keyboard handler. Kept tight: only what the active row
   // needs, no per-key handler allocations, and `preventDefault` only
   // when we actually consume the keystroke.
@@ -60,9 +65,9 @@ export default function Keyboard({
 
   return (
     <div
-      className="w-full max-w-[520px] mx-auto px-1 sm:px-0 flex flex-col gap-[6px] sm:gap-2"
+      className="hoolah-keyboard w-full max-w-[520px] mx-auto px-1 sm:px-0 flex flex-col gap-[6px] sm:gap-2"
       role="group"
-      aria-label="on-screen keyboard"
+      aria-label={copy.label}
     >
       {styledRows.map((row, rowIdx) => (
         <div key={rowIdx} className="flex gap-[4px] sm:gap-[6px] justify-center">
@@ -75,12 +80,12 @@ export default function Keyboard({
               : 'var(--hoolah-key-fg)';
             const label =
               key === 'enter'
-                ? 'submit guess'
+                ? copy.submit
                 : key === 'back'
-                  ? 'delete letter'
-                  : `letter ${key.toUpperCase()}`;
+                  ? copy.delete
+                  : copy.letter(key.toUpperCase());
             const display =
-              key === 'enter' ? 'enter' : key === 'back' ? '⌫' : key.toUpperCase();
+              key === 'enter' ? copy.enter : key === 'back' ? '⌫' : key.toUpperCase();
             return (
               <button
                 key={key}
@@ -93,7 +98,7 @@ export default function Keyboard({
                 data-action={isAction ? 'true' : undefined}
                 data-state={state ?? undefined}
                 style={{
-                  flex: isAction ? '1.4 1 0' : '1 1 0',
+                  flex: isAction ? '1.8 1 0' : '1 1 0',
                   minWidth: 0,
                   // dvh-friendly clamp keeps the 3-row keyboard inside
                   // ~32% of the available height on the smallest phones
@@ -105,7 +110,7 @@ export default function Keyboard({
                   transition:
                     'background-color 80ms linear, transform 80ms ease-out',
                   textTransform: key === 'enter' ? 'lowercase' : 'none',
-                  letterSpacing: key === 'enter' ? '0.05em' : 'normal',
+                  letterSpacing: 0,
                   cursor: disabled ? 'default' : 'pointer',
                   WebkitTapHighlightColor: 'transparent',
                 }}

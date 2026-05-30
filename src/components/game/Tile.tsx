@@ -88,7 +88,7 @@ export default function Tile({
               : letter
                 ? '2px solid var(--hoolah-tile-border-filled)'
                 : '2px solid var(--hoolah-tile-border)',
-            fontSize: 'clamp(1.5rem, 6vw, 2.25rem)',
+            fontSize: '2rem',
             transition:
               'background-color 60ms linear, border-color 60ms linear, color 60ms linear',
             animation: active && letter ? 'tilePop 120ms ease-out' : undefined,

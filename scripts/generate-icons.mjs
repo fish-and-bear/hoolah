@@ -15,7 +15,7 @@ import sharp from 'sharp';
 const OXBLOOD = '#5B0E11';
 const IVORY = '#F4EDE3';
 
-// EB Garamond Italic lowercase 'h' — single-glyph mark, set so a
+// EB Garamond Italic lowercase 'h': single-glyph mark, set so a
 // rasterizer without the font installed still renders something
 // reasonable. We use a generic 'serif' as a fallback.
 function svg({ bg, fg, size, safeArea = 1 }) {

@@ -3,22 +3,27 @@
 import { useEffect, useRef } from 'react';
 
 import Wordmark from '@/components/brand/Wordmark';
+import { COPY } from '@/lib/i18n';
+import type { Locale } from '@/lib/types';
 
 interface TitleScreenProps {
   dateLine: string;
   puzzleNumber: number | null;
   onPlay: () => void;
+  locale: Locale;
 }
 
 // Cold-start surface for first-time visitors and returning players.
-// The brief argues that "the open-the-app moment matters" — the
+// The brief argues that "the open-the-app moment matters". The
 // title screen is the daily-ritual cue, not a splash to skip past.
 export default function TitleScreen({
   dateLine,
   puzzleNumber,
   onPlay,
+  locale,
 }: TitleScreenProps) {
   const btnRef = useRef<HTMLButtonElement | null>(null);
+  const copy = COPY[locale].title;
 
   // Explicit ref-based focus is more reliable than autoFocus for a
   // dynamically-mounted screen, and respects RTL/iOS focus quirks.
@@ -32,12 +37,12 @@ export default function TitleScreen({
       style={{ animation: 'titleEnter 320ms ease-out' }}
     >
       <p
-        className="text-xs uppercase tracking-[0.2em] mb-4 tabular-nums"
+        className="text-xs uppercase tracking-normal mb-4 tabular-nums"
         style={{ color: 'var(--hoolah-muted)' }}
       >
         {puzzleNumber != null
           ? `hoolah ${puzzleNumber.toString().padStart(3, '0')}`
-          : 'preview'}{' '}
+          : copy.preview}{' '}
         · {dateLine}
       </p>
       <Wordmark size="lg" />
@@ -45,8 +50,7 @@ export default function TitleScreen({
         className="mt-4 max-w-sm text-base"
         style={{ color: 'var(--hoolah-muted)' }}
       >
-        guess the Filipino word. five letters, six tries, one new one every
-        day.
+        {copy.tagline}
       </p>
       <button
         ref={btnRef}
@@ -57,12 +61,12 @@ export default function TitleScreen({
           background: 'var(--hoolah-accent)',
           color: '#fff',
           border: 0,
-          letterSpacing: '0.04em',
+          letterSpacing: 0,
           minHeight: 48,
           minWidth: 120,
         }}
       >
-        play
+        {copy.play}
       </button>
     </main>
   );

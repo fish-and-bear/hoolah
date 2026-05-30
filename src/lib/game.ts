@@ -39,7 +39,7 @@ export function judgeGuess(guess: string, answer: string): JudgedGuess {
 }
 
 // Collapse a series of judged guesses into the strongest known state
-// for each letter — used to colour the on-screen keyboard. Order of
+// for each letter, used to colour the on-screen keyboard. Order of
 // strength: correct > present > absent.
 export function keyboardStateFromGuesses(
   guesses: JudgedGuess[]
@@ -57,14 +57,18 @@ export function keyboardStateFromGuesses(
   return out;
 }
 
+export type HardModeViolation =
+  | { code: 'locked-slot'; position: number; letter: string }
+  | { code: 'missing-letter'; letter: string };
+
 // Hard mode constraint: every letter the previous guesses revealed as
 // CORRECT must appear in the same slot, and every PRESENT letter must
-// appear somewhere in the new guess. Returns a human-readable
-// violation message, or null if the guess is legal.
+// appear somewhere in the new guess. Returns a small display-neutral
+// violation object, or null if the guess is legal.
 export function hardModeViolation(
   newGuess: string,
   history: JudgedGuess[]
-): string | null {
+): HardModeViolation | null {
   const g = newGuess.toLowerCase();
   if (history.length === 0) return null;
 
@@ -93,7 +97,11 @@ export function hardModeViolation(
   for (let i = 0; i < WORD_LENGTH; i++) {
     const must = lockedSlots[i];
     if (must && g[i] !== must) {
-      return `${(i + 1).toString()}th letter must be ${must.toUpperCase()}`;
+      return {
+        code: 'locked-slot',
+        position: i + 1,
+        letter: must.toUpperCase(),
+      };
     }
   }
 
@@ -101,7 +109,7 @@ export function hardModeViolation(
   for (const ch of g) guessCounts[ch] = (guessCounts[ch] ?? 0) + 1;
   for (const [letter, need] of Object.entries(needCounts)) {
     if ((guessCounts[letter] ?? 0) < need) {
-      return `Guess must use ${letter.toUpperCase()}`;
+      return { code: 'missing-letter', letter: letter.toUpperCase() };
     }
   }
   return null;

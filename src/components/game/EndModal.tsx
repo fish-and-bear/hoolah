@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { AnswerEntry, GameSnapshot, Stats } from '@/lib/types';
+import { COPY } from '@/lib/i18n';
+import type { AnswerEntry, GameSnapshot, Locale, Stats } from '@/lib/types';
 import { buildShareText, shareOrCopy } from '@/lib/share';
 import { judgeGuess } from '@/lib/game';
 import Countdown from './Countdown';
@@ -14,8 +15,7 @@ interface EndModalProps {
   entry: AnswerEntry;
   stats: Stats;
   dark: boolean;
-  onPlayFreeGame?: () => void;
-  newFreeGameLabel?: string;
+  locale: Locale;
 }
 
 export default function EndModal({
@@ -25,11 +25,11 @@ export default function EndModal({
   entry,
   stats,
   dark,
-  onPlayFreeGame,
-  newFreeGameLabel,
+  locale,
 }: EndModalProps) {
   const [shareState, setShareState] = useState<'' | 'shared' | 'copied' | 'failed'>('');
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+  const copy = COPY[locale];
 
   useEffect(() => {
     if (!open) {
@@ -70,15 +70,15 @@ export default function EndModal({
 
   const headline = won
     ? snapshot.guesses.length === 1
-      ? 'one try.'
-      : `nailed it in ${snapshot.guesses.length}.`
-    : 'maybe tomorrow.';
+      ? copy.end.winOneHeadline
+      : copy.end.winHeadline(snapshot.guesses.length)
+    : copy.end.lossHeadline;
 
   const subhead = won
     ? snapshot.guesses.length <= 3
-      ? 'A clean solve.'
-      : 'A solve is a solve.'
-    : 'The streak resets at midnight Manila time.';
+      ? copy.end.fastSubhead
+      : copy.end.winSubhead
+    : copy.end.lossSubhead;
 
   const onStreak = won && stats.currentStreak >= 2;
 
@@ -129,8 +129,8 @@ export default function EndModal({
             ref={closeBtnRef}
             type="button"
             onClick={onClose}
-            aria-label="close"
-            className="text-2xl leading-none px-2 py-1 -mt-1 -mr-2 rounded"
+            aria-label={copy.common.close}
+            className="-mr-3 -mt-3 inline-flex min-h-11 min-w-11 items-center justify-center rounded text-2xl leading-none"
             style={{ color: 'var(--hoolah-muted)', background: 'transparent' }}
           >
             ×
@@ -141,7 +141,7 @@ export default function EndModal({
           className="rounded-lg p-4"
           style={{ background: 'var(--hoolah-accent-soft)' }}
         >
-          <p className="font-serif text-4xl font-bold leading-none uppercase tracking-wide">
+          <p className="font-serif text-4xl font-bold leading-none uppercase tracking-normal">
             {snapshot.answer}
           </p>
           <p className="text-sm mt-2">
@@ -162,6 +162,7 @@ export default function EndModal({
 
         <StatsPanel
           stats={stats}
+          locale={locale}
           highlight={
             won &&
             snapshot.mode === 'daily' &&
@@ -184,105 +185,63 @@ export default function EndModal({
             }}
           >
             {onStreak
-              ? `Streak alive at ${stats.currentStreak} days.`
+              ? copy.end.streakAlive(stats.currentStreak)
               : !won && stats.maxStreak >= 3
-                ? `Your ${stats.maxStreak}-day streak is on the record. The next one starts tomorrow.`
+                ? copy.end.streakRecord(stats.maxStreak)
                 : null}
           </p>
         ) : null}
 
-        {snapshot.mode === 'daily' ? (
-          <div
-            className="flex flex-col gap-3 pt-3 border-t"
-            style={{ borderColor: 'var(--hoolah-rule)' }}
-          >
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p
-                  className="text-[0.65rem] uppercase tracking-wider"
-                  style={{ color: 'var(--hoolah-muted)' }}
-                >
-                  Next hoolah
-                </p>
-                <p className="font-serif text-xl font-semibold tabular-nums">
-                  <Countdown />
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={handleShare}
-                className="px-5 py-2.5 rounded-md font-medium text-sm hoolah-cta"
-                style={{
-                  background: 'var(--hoolah-accent)',
-                  color: dark ? 'var(--hoolah-ink)' : '#fff',
-                  border: 0,
-                  minHeight: 44,
-                }}
+        <div
+          className="flex flex-col gap-3 pt-3 border-t"
+          style={{ borderColor: 'var(--hoolah-rule)' }}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p
+                className="text-[0.65rem] uppercase tracking-normal"
+                style={{ color: 'var(--hoolah-muted)' }}
               >
-                Share result
-              </button>
+                {copy.end.next}
+              </p>
+              <p className="font-serif text-xl font-semibold tabular-nums">
+                <Countdown />
+              </p>
             </div>
-            <div className="flex items-center justify-between gap-3 text-xs min-h-[1.25rem]">
-              <span
-                aria-live="polite"
-                style={{
-                  color:
-                    shareState === 'failed'
-                      ? '#a13a3a'
-                      : 'var(--hoolah-muted)',
-                }}
-              >
-                {shareState === 'copied'
-                  ? 'Copied to clipboard.'
-                  : shareState === 'shared'
-                    ? 'Shared.'
-                    : shareState === 'failed'
-                      ? 'Copy failed. Try again.'
-                      : ''}
-              </span>
-              {onPlayFreeGame ? (
-                <button
-                  type="button"
-                  onClick={onPlayFreeGame}
-                  className="underline-offset-4 hover:underline"
-                  style={{
-                    color: 'var(--hoolah-muted)',
-                    background: 'transparent',
-                    border: 0,
-                    padding: 0,
-                    minHeight: 32,
-                  }}
-                >
-                  play a free game
-                </button>
-              ) : null}
-            </div>
+            <button
+              type="button"
+              onClick={handleShare}
+              className="px-5 py-2.5 rounded-md font-medium text-sm hoolah-cta"
+              style={{
+                background: 'var(--hoolah-accent)',
+                color: dark ? 'var(--hoolah-ink)' : '#fff',
+                border: 0,
+                minHeight: 44,
+              }}
+            >
+              {copy.end.copyResult}
+            </button>
           </div>
-        ) : (
-          <div
-            className="flex items-center justify-between gap-3 pt-3 border-t"
-            style={{ borderColor: 'var(--hoolah-rule)' }}
-          >
-            <p className="text-xs" style={{ color: 'var(--hoolah-muted)' }}>
-              Free play. No streak. No share.
-            </p>
-            {onPlayFreeGame ? (
-              <button
-                type="button"
-                onClick={onPlayFreeGame}
-                className="px-4 py-2 rounded font-medium text-sm hoolah-cta"
-                style={{
-                  background: 'var(--hoolah-accent)',
-                  color: dark ? 'var(--hoolah-ink)' : '#fff',
-                  border: 0,
-                  minHeight: 44,
-                }}
-              >
-                {newFreeGameLabel ?? 'Another word'}
-              </button>
-            ) : null}
+          <div className="flex min-h-[1.25rem] items-center text-xs">
+            <span
+              aria-live="polite"
+              style={{
+                color:
+                  shareState === 'failed'
+                    ? '#a13a3a'
+                    : 'var(--hoolah-muted)',
+              }}
+            >
+              {shareState === 'copied'
+                ? copy.end.copied
+                : shareState === 'shared'
+                  ? copy.end.shared
+                  : shareState === 'failed'
+                    ? copy.end.copyFailed
+                    : ''}
+            </span>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

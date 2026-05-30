@@ -25,8 +25,8 @@ const config: Config = {
         ],
       },
       letterSpacing: {
-        tight: '-0.01em',
-        wordmark: '-0.02em',
+        tight: '0',
+        wordmark: '0',
       },
       animation: {
         'tile-flip': 'tileFlip 600ms ease-in-out forwards',

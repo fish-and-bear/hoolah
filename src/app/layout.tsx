@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
     default: 'hoolah',
-    template: '%s — hoolah',
+    template: '%s | hoolah',
   },
   description: `${TAGLINE}. A daily five-letter Tagalog word game.`,
   applicationName: 'hoolah',
@@ -88,7 +88,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  // Allow user zoom up to 5x — there are no <input> elements on the
+  // Allow user zoom up to 5x. There are no <input> elements on the
   // page so the iOS Safari zoom-on-focus footgun does not apply, and
   // locking out zoom is an a11y regression for low-vision players.
   maximumScale: 5,
@@ -105,13 +105,16 @@ export const viewport: Viewport = {
 // data-theme attribute on <html>.
 const THEME_INIT_SCRIPT = `(() => { try {
   var raw = localStorage.getItem('hoolah:v1:settings');
-  var pref = raw ? (JSON.parse(raw).theme || 'system') : 'system';
+  var s = raw ? JSON.parse(raw) : {};
+  var pref = s.theme || 'system';
   var dark = pref === 'dark' || (pref === 'system' &&
     window.matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-  if (raw) {
-    var s = JSON.parse(raw);
-    if (s.reducedMotion) document.documentElement.setAttribute('data-reduced-motion', 'true');
+  var locale = s.locale === 'fil' ? 'fil' : 'en';
+  document.documentElement.setAttribute('data-locale', locale);
+  document.documentElement.lang = locale;
+  if (s.reducedMotion) {
+    document.documentElement.setAttribute('data-reduced-motion', 'true');
   }
 } catch (e) {} })();`;
 

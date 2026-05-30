@@ -1,10 +1,8 @@
 import { daysBetween, manilaDateString } from './time';
 
-// The first hoolah ever shipped. Day 1 of the rotation. Picked as
-// 2026-06-01 to give an obvious "this is when the game started" line
-// the player can cite. Do not change this constant after launch; the
-// puzzle number depends on it.
-export const EPOCH_DATE = '2026-06-01';
+// The first hoolah ever shipped. Day 1 of the rotation. Do not change
+// this constant after launch; the puzzle number depends on it.
+export const EPOCH_DATE = '2026-05-30';
 
 // Pure FNV-1a 32-bit hash of a string, used as a stable seed for the
 // answer rotation. The whole point is to be deterministic across
@@ -74,7 +72,7 @@ function permutationFor(answerCount: number): Int32Array {
 // Implementation: a seeded Fisher-Yates shuffle of [0..answerCount),
 // computed once and memoized by length, indexed by (puzzleNumber - 1)
 // mod answerCount. This guarantees every word appears exactly once
-// before any word repeats — i.e. the first repeat is day answerCount+1,
+  // before any word repeats, i.e. the first repeat is day answerCount+1,
 // not "somewhere around day 15" as the previous fnv % length approach
 // produced via the birthday paradox.
 //

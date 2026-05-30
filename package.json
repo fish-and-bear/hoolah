@@ -3,29 +3,52 @@
   "version": "0.1.0",
   "private": true,
   "description": "A daily Filipino word game. Five letters, six tries, one new word every day.",
+  "license": "MIT",
+  "packageManager": "pnpm@9.15.5",
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fish-and-bear/hoolah.git"
+  },
+  "bugs": {
+    "url": "https://github.com/fish-and-bear/hoolah/issues"
+  },
+  "homepage": "https://hoolah.hapinas.net",
+  "pnpm": {
+    "overrides": {
+      "postcss": "8.5.15"
+    }
+  },
   "scripts": {
     "dev": "node scripts/generate-icons.mjs && next dev",
     "prebuild": "node scripts/generate-icons.mjs && node scripts/validate-wordlists.mjs",
     "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "typecheck": "tsc --noEmit",
+    "preview": "serve out --no-clipboard",
+    "start": "pnpm run preview",
+    "lint": "eslint . --max-warnings=0",
+    "test": "node scripts/test-logic.mjs",
+    "typecheck": "tsc --noEmit --incremental false",
     "icons": "node scripts/generate-icons.mjs",
-    "validate": "node scripts/validate-wordlists.mjs"
+    "validate": "node scripts/validate-wordlists.mjs",
+    "ci": "pnpm run validate && pnpm run test && pnpm run typecheck && pnpm run lint && pnpm run build"
   },
   "dependencies": {
-    "next": "15.5.2",
-    "react": "19.0.0",
-    "react-dom": "19.0.0"
+    "next": "15.5.18",
+    "react": "19.2.6",
+    "react-dom": "19.2.6"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "3.3.5",
     "@types/node": "20.14.0",
-    "@types/react": "19.0.0",
-    "@types/react-dom": "19.0.0",
-    "autoprefixer": "10.4.20",
-    "eslint": "8.57.0",
-    "eslint-config-next": "15.5.2",
-    "postcss": "8.4.49",
+    "@types/react": "19.2.15",
+    "@types/react-dom": "19.2.3",
+    "autoprefixer": "10.5.0",
+    "eslint": "9.39.4",
+    "eslint-config-next": "15.5.18",
+    "postcss": "8.5.15",
+    "serve": "14.2.6",
     "sharp": "0.34.5",
     "tailwindcss": "3.4.16",
     "typescript": "5.6.3"

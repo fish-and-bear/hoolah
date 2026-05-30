@@ -1,13 +1,19 @@
 'use client';
 
 import { useEffect } from 'react';
+import { COPY } from '@/lib/i18n';
+import type { Locale } from '@/lib/types';
 
 interface HelpProps {
   open: boolean;
   onClose: () => void;
+  locale: Locale;
 }
 
-export default function Help({ open, onClose }: HelpProps) {
+export default function Help({ open, onClose, locale }: HelpProps) {
+  const copy = COPY[locale].help;
+  const common = COPY[locale].common;
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -34,33 +40,36 @@ export default function Help({ open, onClose }: HelpProps) {
         style={{
           background: 'var(--hoolah-modal-bg)',
           color: 'var(--hoolah-fg)',
+          maxHeight: '92dvh',
+          overflowY: 'auto',
+          paddingBottom: 'calc(env(safe-area-inset-bottom) + 2rem)',
           animation: 'fadeIn 180ms ease-out',
         }}
       >
         <div className="flex items-start justify-between">
           <h2 id="help-title" className="font-serif text-2xl font-bold">
-            how to play
+            {copy.title}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="close"
-            className="text-2xl leading-none px-2 py-1 -mt-1 -mr-2"
+            aria-label={common.close}
+            className="-mr-3 -mt-3 inline-flex min-h-11 min-w-11 items-center justify-center rounded text-2xl leading-none"
             style={{ color: 'var(--hoolah-muted)', background: 'transparent' }}
           >
             ×
           </button>
         </div>
 
-        <p>Guess the Tagalog word in six tries.</p>
+        <p>{copy.intro}</p>
         <ol className="list-decimal pl-5 flex flex-col gap-1 text-sm">
-          <li>Type any five-letter Filipino word and press enter.</li>
-          <li>The tiles flip to show how close you were.</li>
-          <li>Use what you learn for the next guess.</li>
+          {copy.steps.map((step) => (
+            <li key={step}>{step}</li>
+          ))}
         </ol>
 
         <Example
-          label="Tile colours"
+          label={copy.tileColours}
           rows={[
             [
               { l: 'b', s: 'correct' },
@@ -72,7 +81,7 @@ export default function Help({ open, onClose }: HelpProps) {
           ]}
           note={
             <>
-              <b>B</b> is in the word and in the right spot.
+              <b>B</b> {copy.correctExample}
             </>
           }
         />
@@ -88,7 +97,7 @@ export default function Help({ open, onClose }: HelpProps) {
           ]}
           note={
             <>
-              <b>A</b> is in the word but somewhere else.
+              <b>A</b> {copy.presentExample}
             </>
           }
         />
@@ -102,7 +111,7 @@ export default function Help({ open, onClose }: HelpProps) {
               { l: 'g', s: 'absent' },
             ],
           ]}
-          note={<>None of these letters are in the word.</>}
+          note={<>{copy.absentExample}</>}
         />
 
         <p
@@ -112,9 +121,8 @@ export default function Help({ open, onClose }: HelpProps) {
             borderColor: 'var(--hoolah-rule)',
           }}
         >
-          A new word every day at midnight, Manila time. Only the 26-letter
-          Latin alphabet (no diacritics). See <a href="/rules">/rules</a> for
-          hard mode and accessibility notes.
+          {copy.footerBeforeLink} <a href="/rules">{copy.footerLink}</a>{' '}
+          {copy.footerAfterLink}
         </p>
       </div>
     </div>
@@ -139,7 +147,7 @@ function Example({
     <div className="flex flex-col gap-1">
       {label ? (
         <p
-          className="text-[0.7rem] uppercase tracking-wider"
+          className="text-[0.7rem] uppercase tracking-normal"
           style={{ color: 'var(--hoolah-muted)' }}
         >
           {label}

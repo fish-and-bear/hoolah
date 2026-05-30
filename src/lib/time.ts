@@ -42,12 +42,19 @@ export function formatCountdown(ms: number): string {
 
 // Days between two ISO date strings (YYYY-MM-DD). Positive when b is
 // after a. Returns null if either string is invalid.
-export function daysBetween(a: string, b: string): number | null {
+function isoDateToUtcMs(value: string): number | null {
   const re = /^\d{4}-\d{2}-\d{2}$/;
-  if (!re.test(a) || !re.test(b)) return null;
-  const [ay, am, ad] = a.split('-').map(Number);
-  const [by, bm, bd] = b.split('-').map(Number);
-  const aUtc = Date.UTC(ay, am - 1, ad);
-  const bUtc = Date.UTC(by, bm - 1, bd);
+  if (!re.test(value)) return null;
+  const [y, m, d] = value.split('-').map(Number);
+  const utc = Date.UTC(y, m - 1, d);
+  if (Number.isNaN(utc)) return null;
+  if (new Date(utc).toISOString().slice(0, 10) !== value) return null;
+  return utc;
+}
+
+export function daysBetween(a: string, b: string): number | null {
+  const aUtc = isoDateToUtcMs(a);
+  const bUtc = isoDateToUtcMs(b);
+  if (aUtc === null || bUtc === null) return null;
   return Math.round((bUtc - aUtc) / 86_400_000);
 }

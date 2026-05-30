@@ -12,6 +12,11 @@ import {
   keyboardStateFromGuesses,
 } from '@/lib/game';
 import {
+  COPY,
+  formatHardModeViolation,
+  formatLongDate,
+} from '@/lib/i18n';
+import {
   loadGame,
   loadSettings,
   loadStats,
@@ -20,7 +25,11 @@ import {
   saveSettings,
   saveStats,
 } from '@/lib/storage';
-import { daysBetween, manilaDateString } from '@/lib/time';
+import {
+  markSnapshotRecorded,
+  recordDailyResult,
+  snapshotWasRecorded,
+} from '@/lib/stats';
 import {
   DEFAULT_SETTINGS,
   EMPTY_STATS,
@@ -88,57 +97,6 @@ function pickDailyPuzzle(): ActivePuzzle {
   };
 }
 
-function pickFreePuzzle(): ActivePuzzle {
-  const idx = Math.floor(Math.random() * answers.length);
-  const entry = answers[idx];
-  const tag = Math.random().toString(36).slice(2, 8);
-  return {
-    key: `free:${tag}`,
-    mode: 'free',
-    date: manilaDateString(),
-    puzzleNumber: null,
-    answer: entry.word,
-    entry,
-  };
-}
-
-function applyResultToStats(
-  prev: Stats,
-  won: boolean,
-  guessesUsed: number,
-  date: string
-): Stats {
-  const next: Stats = {
-    ...prev,
-    histogram: [...prev.histogram] as Stats['histogram'],
-  };
-  next.played = prev.played + 1;
-  if (won) {
-    next.wins = prev.wins + 1;
-    next.histogram[guessesUsed - 1] = next.histogram[guessesUsed - 1] + 1;
-    const dayGap = prev.lastWonOn ? daysBetween(prev.lastWonOn, date) : null;
-    next.currentStreak = dayGap === 1 ? prev.currentStreak + 1 : 1;
-    next.maxStreak = Math.max(next.maxStreak, next.currentStreak);
-    next.lastWonOn = date;
-  } else {
-    next.currentStreak = 0;
-  }
-  next.lastPlayedOn = date;
-  return next;
-}
-
-function formatDateLong(date: string): string {
-  const [y, m, d] = date.split('-').map(Number);
-  const localDate = new Date(Date.UTC(y, m - 1, d));
-  return localDate.toLocaleDateString('en-US', {
-    timeZone: 'UTC',
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
-
 // Soft haptic on guess submit, celebratory on win. iOS Safari does not
 // expose navigator.vibrate; this becomes a no-op there. Wrapped in a
 // try/catch because some Android skins throw on certain patterns.
@@ -171,13 +129,34 @@ export default function Game() {
   // Whether the daily puzzle's stats have already been recorded. We
   // record exactly once per (daily) game, identified by puzzle key.
   const recordedKeys = useRef(new Set<string>());
+  const timers = useRef<number[]>([]);
+  const submitLocked = useRef(false);
+  const toastToken = useRef(0);
+  const copy = COPY[settings.locale];
+
+  const schedule = useCallback((fn: () => void, ms: number) => {
+    const id = window.setTimeout(() => {
+      timers.current = timers.current.filter((timer) => timer !== id);
+      fn();
+    }, ms);
+    timers.current.push(id);
+    return id;
+  }, []);
+
+  const clearTimers = useCallback(() => {
+    for (const id of timers.current) window.clearTimeout(id);
+    timers.current = [];
+  }, []);
+
+  useEffect(() => clearTimers, [clearTimers]);
 
   // Boot: hydrate settings/stats and load today's puzzle.
   useEffect(() => {
     const s = loadSettings();
-    const st = loadStats();
+    let st = loadStats();
     setSettings(s);
-    setStats(st);
+    document.documentElement.lang = COPY[s.locale].meta.htmlLang;
+    document.documentElement.setAttribute('data-locale', s.locale);
     document.documentElement.setAttribute(
       'data-reduced-motion',
       s.reducedMotion ? 'true' : 'false'
@@ -192,6 +171,17 @@ export default function Game() {
       // Returning players whose previous snapshot already wrapped up:
       // pop the modal automatically.
       if (existing.status !== 'in-progress') {
+        if (
+          existing.mode === 'daily' &&
+          existing.puzzleNumber !== null &&
+          !snapshotWasRecorded(st, existing)
+        ) {
+          st =
+            st.lastPlayedOn === existing.dateIssued
+              ? markSnapshotRecorded(st, existing)
+              : recordDailyResult(st, existing);
+          saveStats(st);
+        }
         recordedKeys.current.add(existing.key);
         setEndOpen(true);
         setTitleVisible(false);
@@ -206,6 +196,7 @@ export default function Game() {
     // Trim old per-game entries.
     pruneGames([todaysPuzzle.key]);
 
+    setStats(st);
     setMounted(true);
   }, []);
 
@@ -220,22 +211,31 @@ export default function Game() {
       'data-theme',
       dark ? 'dark' : 'light'
     );
+    document.documentElement.lang = copy.meta.htmlLang;
+    document.documentElement.setAttribute('data-locale', settings.locale);
     document.documentElement.setAttribute(
       'data-reduced-motion',
       settings.reducedMotion ? 'true' : 'false'
     );
     saveSettings(settings);
-  }, [settings, mounted]);
+  }, [settings, mounted, copy.meta.htmlLang]);
 
   // Persist snapshot every change.
   useEffect(() => {
     if (snapshot && mounted) saveGame(snapshot);
   }, [snapshot, mounted]);
 
-  const showToast = useCallback((msg: string, ms = 1600) => {
-    setToast(msg);
-    window.setTimeout(() => setToast((t) => (t === msg ? null : t)), ms);
-  }, []);
+  const showToast = useCallback(
+    (msg: string, ms = 1600) => {
+      const token = toastToken.current + 1;
+      toastToken.current = token;
+      setToast(msg);
+      schedule(() => {
+        if (toastToken.current === token) setToast(null);
+      }, ms);
+    },
+    [schedule]
+  );
 
   const judgedGuesses = useMemo(() => {
     if (!snapshot) return [];
@@ -252,35 +252,37 @@ export default function Game() {
       if (!snapshot || !puzzle) return;
       if (snapshot.status !== 'in-progress') return;
       if (revealingRow !== null) return;
+      if (submitLocked.current) return;
 
       if (key === 'enter') {
         if (current.length < WORD_LENGTH) {
-          showToast('Not enough letters');
+          showToast(copy.game.notEnoughLetters);
           setShakingRow(snapshot.guesses.length);
-          window.setTimeout(() => setShakingRow(null), 500);
+          schedule(() => setShakingRow(null), 500);
           return;
         }
         if (!guessSet.has(current)) {
-          showToast('Not in word list');
+          showToast(copy.game.notInWordList);
           setShakingRow(snapshot.guesses.length);
-          window.setTimeout(() => setShakingRow(null), 500);
+          schedule(() => setShakingRow(null), 500);
           return;
         }
         if (snapshot.hardMode) {
           const violation = hardModeViolation(current, judgedGuesses);
           if (violation) {
-            showToast(violation);
+            showToast(formatHardModeViolation(violation, settings.locale));
             setShakingRow(snapshot.guesses.length);
-            window.setTimeout(() => setShakingRow(null), 500);
+            schedule(() => setShakingRow(null), 500);
             return;
           }
         }
 
+        submitLocked.current = true;
         const judged = judgeGuess(current, snapshot.answer);
         const nextGuesses = [...snapshot.guesses, current];
         const rowIdx = snapshot.guesses.length;
         setRevealingRow(rowIdx);
-        const flipMs = rowIdx * 280 + 300 + 80; // last tile's flip end + small buffer
+        const flipMs = (WORD_LENGTH - 1) * 280 + 300 + 80; // last tile's flip end + small buffer
         const won = isWin(judged);
         const lost = !won && nextGuesses.length >= MAX_GUESSES;
         const status = won ? 'won' : lost ? 'lost' : 'in-progress';
@@ -298,44 +300,41 @@ export default function Game() {
         // confirmation, not interruption.
         haptic(12);
 
-        window.setTimeout(() => {
+        schedule(() => {
           setRevealingRow(null);
+          submitLocked.current = false;
           if (won) {
             setBouncingRow(rowIdx);
-            window.setTimeout(() => setBouncingRow(null), 700);
+            schedule(() => setBouncingRow(null), 700);
             // Celebratory triple-pulse on the win, only after the row
             // finishes flipping so the haptic lines up with the bounce.
             haptic([18, 60, 18, 60, 30]);
           }
           if (status !== 'in-progress') {
-            // Daily-only AND only after the launch epoch: free-play games
-            // are already excluded by mode, but pre-launch games carry
-            // mode='daily' with puzzleNumber=null (the label is "preview"
-            // in that case) and must not pollute the histogram either.
+            // Only after the launch epoch: pre-launch games carry
+            // puzzleNumber=null (the label is "preview" in that case)
+            // and must not pollute the histogram.
             if (
               nextSnapshot.mode === 'daily' &&
               nextSnapshot.puzzleNumber !== null &&
               !recordedKeys.current.has(nextSnapshot.key)
             ) {
               recordedKeys.current.add(nextSnapshot.key);
-              const updated = applyResultToStats(
-                stats,
-                won,
-                nextGuesses.length,
-                nextSnapshot.dateIssued
-              );
-              setStats(updated);
-              saveStats(updated);
+              setStats((prev) => {
+                const updated = recordDailyResult(prev, nextSnapshot);
+                saveStats(updated);
+                return updated;
+              });
             }
             showToast(
               won
                 ? nextGuesses.length === 1
-                  ? 'In one. The dream guess.'
-                  : `Solved in ${nextGuesses.length}.`
-                : `The word was ${nextSnapshot.answer.toUpperCase()}.`,
+                  ? copy.game.winOne
+                  : copy.game.solvedIn(nextGuesses.length)
+                : copy.game.wordWas(nextSnapshot.answer.toUpperCase()),
               2400
             );
-            window.setTimeout(() => setEndOpen(true), 1100);
+            schedule(() => setEndOpen(true), 1100);
           }
         }, flipMs);
       } else if (key === 'back') {
@@ -344,7 +343,17 @@ export default function Game() {
         if (current.length < WORD_LENGTH) setCurrent(current + key);
       }
     },
-    [snapshot, puzzle, current, judgedGuesses, revealingRow, stats, showToast]
+    [
+      snapshot,
+      puzzle,
+      current,
+      judgedGuesses,
+      revealingRow,
+      showToast,
+      schedule,
+      copy,
+      settings.locale,
+    ]
   );
 
   const startGame = useCallback(() => {
@@ -357,30 +366,6 @@ export default function Game() {
       setHelpOpen(true);
     }
   }, []);
-
-  const startFreeGame = useCallback(() => {
-    const p = pickFreePuzzle();
-    setPuzzle(p);
-    setSnapshot(freshSnapshot(p, settings.hardMode));
-    setCurrent('');
-    setEndOpen(false);
-    setSettingsOpen(false);
-  }, [settings.hardMode]);
-
-  const resumeDaily = useCallback(() => {
-    const daily = pickDailyPuzzle();
-    setPuzzle(daily);
-    const existing = loadGame(daily.key);
-    if (existing && existing.answer === daily.answer) {
-      setSnapshot(existing);
-      setEndOpen(existing.status !== 'in-progress');
-    } else {
-      setSnapshot(freshSnapshot(daily, settings.hardMode));
-      setEndOpen(false);
-    }
-    setSettingsOpen(false);
-    setCurrent('');
-  }, [settings.hardMode]);
 
   if (!mounted || !snapshot || !puzzle) {
     // Skeleton: same vertical rhythm as the game, no flash on hydration.
@@ -398,11 +383,16 @@ export default function Game() {
     return (
       <>
         <TitleScreen
-          dateLine={formatDateLong(puzzle.date)}
+          dateLine={formatLongDate(puzzle.date, settings.locale)}
           puzzleNumber={puzzle.puzzleNumber}
           onPlay={startGame}
+          locale={settings.locale}
         />
-        <Help open={helpOpen} onClose={() => setHelpOpen(false)} />
+        <Help
+          open={helpOpen}
+          onClose={() => setHelpOpen(false)}
+          locale={settings.locale}
+        />
       </>
     );
   }
@@ -413,41 +403,39 @@ export default function Game() {
       style={{ animation: 'boardEnter 220ms ease-out' }}
     >
       <div
-        className="flex items-center justify-between px-3 sm:px-4 pt-2 pb-1"
+        className="flex min-h-11 items-center justify-between gap-3 px-3 sm:px-4"
         style={{ color: 'var(--hoolah-muted)' }}
       >
-        <p className="text-[0.7rem] uppercase tracking-[0.18em]">
-          {puzzle.mode === 'free'
-            ? 'free play'
-            : puzzle.puzzleNumber != null
-              ? `hoolah ${puzzle.puzzleNumber.toString().padStart(3, '0')}`
-              : 'preview'}
+        <p className="min-w-0 truncate text-[0.7rem] uppercase tracking-normal">
+          {puzzle.puzzleNumber != null
+            ? `hoolah ${puzzle.puzzleNumber.toString().padStart(3, '0')}`
+            : copy.game.preview}
         </p>
         <div className="flex items-center gap-1">
           <button
             type="button"
-            aria-label="how to play"
+            aria-label={copy.game.howToPlay}
             onClick={() => setHelpOpen(true)}
-            className="text-sm px-2 py-1 rounded"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded text-sm"
             style={{ background: 'transparent', color: 'inherit' }}
           >
             ?
           </button>
           <button
             type="button"
-            aria-label="stats"
+            aria-label={copy.game.stats}
             disabled={inProgress}
             onClick={() => setEndOpen(true)}
-            className="text-sm px-2 py-1 rounded disabled:opacity-30"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded text-sm disabled:opacity-30"
             style={{ background: 'transparent', color: 'inherit' }}
           >
             ☷
           </button>
           <button
             type="button"
-            aria-label="settings"
+            aria-label={copy.game.settings}
             onClick={() => setSettingsOpen(true)}
-            className="text-sm px-2 py-1 rounded"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded text-sm"
             style={{ background: 'transparent', color: 'inherit' }}
           >
             ⚙
@@ -455,7 +443,7 @@ export default function Game() {
         </div>
       </div>
 
-      <main className="flex-1 flex flex-col items-center justify-between gap-4 px-3 sm:px-4 py-3 sm:py-5">
+      <main className="hoolah-game-main flex flex-1 flex-col items-center justify-between gap-3 px-3 py-3 sm:gap-4 sm:px-4 sm:py-5">
         <Toast message={toast} />
         <Board
           judged={judgedGuesses}
@@ -463,11 +451,13 @@ export default function Game() {
           revealingRow={revealingRow}
           shakingRow={shakingRow}
           bouncingRow={bouncingRow}
+          locale={settings.locale}
         />
         <Keyboard
           onKey={onHandleKey}
           letterStates={letterStates}
           disabled={!inProgress || revealingRow !== null}
+          locale={settings.locale}
         />
       </main>
 
@@ -478,8 +468,7 @@ export default function Game() {
         entry={entryByWord.get(snapshot.answer) ?? puzzle.entry}
         stats={stats}
         dark={dark}
-        onPlayFreeGame={startFreeGame}
-        newFreeGameLabel={snapshot.mode === 'free' ? 'Another word' : undefined}
+        locale={settings.locale}
       />
 
       <SettingsModal
@@ -494,7 +483,7 @@ export default function Game() {
             snapshot.guesses.length > 0 &&
             snapshot.status === 'in-progress'
           ) {
-            showToast('Finish today first to change hard mode.');
+            showToast(copy.game.finishTodayFirst);
             return;
           }
           setSettings(next);
@@ -511,12 +500,13 @@ export default function Game() {
           snapshot.guesses.length > 0 &&
           snapshot.status === 'in-progress'
         }
-        onFreePlay={startFreeGame}
-        freePlayActive={snapshot.mode === 'free'}
-        onResumeDaily={resumeDaily}
       />
 
-      <Help open={helpOpen} onClose={() => setHelpOpen(false)} />
+      <Help
+        open={helpOpen}
+        onClose={() => setHelpOpen(false)}
+        locale={settings.locale}
+      />
     </div>
   );
 }

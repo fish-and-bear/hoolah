@@ -1,0 +1,45 @@
+name: Bug report
+description: Report a gameplay, UI, storage, or deployment bug.
+title: "[bug]: "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Tell us what you expected and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: URL or page
+      placeholder: https://hoolah.hapinas.net/
+  - type: dropdown
+    id: device
+    attributes:
+      label: Device
+      options:
+        - iPhone / iPad
+        - Android
+        - Desktop
+        - Other
+  - type: input
+    id: browser
+    attributes:
+      label: Browser
+      placeholder: Safari 18, Chrome 126, Firefox 127
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open ...
+        2. Tap ...
+        3. See ...
+  - type: textarea
+    id: notes
+    attributes:
+      label: Extra context
+      description: Screenshots, console errors, or localStorage notes help.

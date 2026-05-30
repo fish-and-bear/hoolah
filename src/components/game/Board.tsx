@@ -1,7 +1,8 @@
 'use client';
 
 import { MAX_GUESSES, WORD_LENGTH } from '@/lib/types';
-import type { JudgedGuess } from '@/lib/types';
+import { COPY } from '@/lib/i18n';
+import type { JudgedGuess, Locale } from '@/lib/types';
 import Tile from './Tile';
 
 interface BoardProps {
@@ -13,15 +14,19 @@ interface BoardProps {
   shakingRow: number | null;
   // Index of the row that should bounce (win).
   bouncingRow: number | null;
+  locale: Locale;
 }
 
 // Read out a judged row in a screen-reader-friendly way. Wordle's own
 // approach: "letter, position N, correct" style is too chatty; this
 // flattens to "B correct, A absent, H absent..." which most readers
 // chunk well.
-function describeJudged(row: JudgedGuess): string {
+function describeJudged(
+  row: JudgedGuess,
+  states: Record<JudgedGuess[number]['state'], string>
+): string {
   return row
-    .map((t) => `${t.letter.toUpperCase()} ${t.state}`)
+    .map((t) => `${t.letter.toUpperCase()} ${states[t.state]}`)
     .join(', ');
 }
 
@@ -31,7 +36,9 @@ export default function Board({
   revealingRow,
   shakingRow,
   bouncingRow,
+  locale,
 }: BoardProps) {
+  const copy = COPY[locale].board;
   const rows: ('done' | 'active' | 'empty')[] = [];
   for (let i = 0; i < MAX_GUESSES; i++) {
     if (i < judged.length) rows.push('done');
@@ -46,19 +53,21 @@ export default function Board({
   const latestRow = judged.length > 0 ? judged[judged.length - 1] : null;
   const announcement =
     latestRow && revealingRow === null
-      ? `Row ${judged.length}: ${describeJudged(latestRow)}`
+      ? copy.rowAnnouncement(
+          judged.length,
+          describeJudged(latestRow, copy.states)
+        )
       : '';
 
   return (
     <>
       <div
-        className="w-full mx-auto grid gap-[6px] sm:gap-2"
+        className="hoolah-board w-full mx-auto grid gap-[6px] sm:gap-2"
         style={{
-          maxWidth: 'min(360px, 90vw)',
           gridTemplateRows: `repeat(${MAX_GUESSES}, 1fr)`,
         }}
         role="grid"
-        aria-label="hoolah game board"
+        aria-label={copy.label}
       >
         {rows.map((kind, rowIdx) => {
           const judgedRow = kind === 'done' ? judged[rowIdx] : null;
@@ -81,10 +90,13 @@ export default function Board({
 
           const rowLabel =
             kind === 'done'
-              ? `guess ${rowIdx + 1}: ${(judgedRow ?? []).map((t) => t.letter).join('').toUpperCase()}`
+              ? copy.doneRow(
+                  rowIdx + 1,
+                  (judgedRow ?? []).map((t) => t.letter).join('').toUpperCase()
+                )
               : kind === 'active'
-                ? `guess ${rowIdx + 1}: in progress, ${current.length} of ${WORD_LENGTH} letters`
-                : `guess ${rowIdx + 1}: empty`;
+                ? copy.activeRow(rowIdx + 1, current.length, WORD_LENGTH)
+                : copy.emptyRow(rowIdx + 1);
 
           return (
             <div

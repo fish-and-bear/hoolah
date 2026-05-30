@@ -4,12 +4,6 @@ import { MAX_GUESSES } from './types';
 const EMOJI = {
   correct: '🟩',
   present: '🟨',
-  absent: '⬛',
-} as const;
-
-const EMOJI_DARK = {
-  correct: '🟩',
-  present: '🟨',
   absent: '⬜',
 } as const;
 
@@ -30,24 +24,17 @@ export function buildShareText({
   guesses,
   won,
   hardMode,
-  dark = false,
-  shareUrl,
 }: ShareOptions): string {
-  const palette = dark ? EMOJI_DARK : EMOJI;
   const score = won ? `${guesses.length}/${MAX_GUESSES}` : `X/${MAX_GUESSES}`;
   const label =
     puzzleNumber != null
       ? `hoolah ${puzzleNumber.toString().padStart(3, '0')}`
       : 'hoolah';
-  const head = `${label} \u2014 ${score}${hardMode ? '*' : ''}`;
+  const head = `${label} ${score}${hardMode ? '*' : ''}`;
   const grid = guesses
-    .map((g) => g.map((t) => palette[t.state]).join(''))
+    .map((g) => g.map((t) => EMOJI[t.state]).join(''))
     .join('\n');
-  // Per the brief: bare hostname, not the full https:// URL. Most
-  // social/chat clients auto-linkify hoolah.hapinas.net without the
-  // scheme, and the bare form reads cleaner in the share preview.
-  const url = shareUrl ?? 'hoolah.hapinas.net';
-  return `${head}\n\n${grid}\n\n${url}`;
+  return `${head}\n\n${grid}`;
 }
 
 // Returns true on success. Falls back to a hidden textarea + execCommand
@@ -79,11 +66,16 @@ export async function copyToClipboard(text: string): Promise<boolean> {
   }
 }
 
-// Wraps the Web Share API. Returns 'shared' | 'copied' | 'failed'.
+// Copy first, because the Wordle-style web flow is "copy this result
+// block". If clipboard access is blocked, fall back to native share on
+// platforms that support it.
 export async function shareOrCopy(
   text: string,
   title = 'hoolah'
 ): Promise<'shared' | 'copied' | 'failed'> {
+  const copied = await copyToClipboard(text);
+  if (copied) return 'copied';
+
   if (
     typeof navigator !== 'undefined' &&
     typeof navigator.share === 'function'
@@ -98,6 +90,5 @@ export async function shareOrCopy(
       // fall through to copy
     }
   }
-  const ok = await copyToClipboard(text);
-  return ok ? 'copied' : 'failed';
+  return 'failed';
 }

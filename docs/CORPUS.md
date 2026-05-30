@@ -6,18 +6,18 @@ This document covers how the v1 word lists were assembled, what each word had to
 
 Two files under `src/data/`:
 
-- `answers.json` — 154 entries. Every entry has a `word`, a part of speech (`pos`), a one-line English `gloss`, and an optional `note` for words with a meaning or context that a one-line gloss would flatten. These are the words that can appear as the daily answer.
-- `guesses.json` — 425 additional words accepted as guesses but never selected as the answer. Plain strings; no gloss. The runtime accepts the union of the two lists as legal guesses (579 words total).
+- `answers.json`: 311 entries. Every entry has a `word`, a part of speech (`pos`), a one-line English `gloss`, and an optional `note` for words with a meaning or context that a one-line gloss would flatten. These are the words that can appear as the daily answer.
+- `guesses.json`: 627 accepted guesses total, including every answer word and 316 additional words that are accepted during play but never selected as the answer. Plain strings; no gloss. The runtime accepts the union of the two lists as legal guesses (627 words total).
 
 Both files are validated at build time by `scripts/validate-wordlists.mjs`: every entry has to be 5 lowercase a–z letters, no duplicates within a list, and every `answers.json` word must also appear in (or be unioned into) the guess set.
 
 ## Where the words actually came from
 
-The honest answer, said plainly: **v1 is hand-curated by the author from her own active Tagalog vocabulary**, cross-checked against the dictionaries and references she keeps for her linguistics work. The lists were not extracted from a tagged corpus, scraped from Wiktionary, or imported from KWF's *Diksiyonaryo ng Wikang Filipino*. They were typed in by one person, one word at a time, and reviewed against the criteria below.
+The honest answer, said plainly: **v1 is hand-reviewed by the author from active Tagalog vocabulary and researched candidate lists**, cross-checked against the dictionaries and references she keeps for her linguistics work. The launch lists were not extracted from a tagged corpus, scraped from Wiktionary, or imported from KWF's *Diksiyonaryo ng Wikang Filipino*. Later additions may start from public lexical references or player suggestions, but they still only ship after manual review against the criteria below.
 
-For a v1 daily word game, that is a defensible source. It also has to be stated and not hidden. A small list curated by someone who actually speaks the language beats a long list pulled from a corpus that no one has read end-to-end.
+For a v1 daily word game, that is a defensible source. It also has to be stated and not hidden. A reviewed list curated by someone who actually speaks the language beats a long list pulled from a corpus that no one has read end-to-end.
 
-The author's published work on Filipino morphology — [Comparative Analysis of Tagalog Stemmers (PACLIC 38, Tokyo, 2024)](https://aclanthology.org/2024.paclic-1.64/) — and the related `explorer.hapinas.net` lexical data project are the *motivation* for caring about a clean Tagalog dataset. They are not the source of these particular 579 strings.
+The author's published work on Filipino morphology, [Comparative Analysis of Tagalog Stemmers (PACLIC 38, Tokyo, 2024)](https://aclanthology.org/2024.paclic-1.64/), and the related `explorer.hapinas.net` lexical data project are the *motivation* for caring about a clean Tagalog dataset. They are not the source of the original launch strings.
 
 Future versions will integrate named external sources. Candidates, in roughly the order they would be incorporated:
 
@@ -26,7 +26,7 @@ Future versions will integrate named external sources. Candidates, in roughly th
 - The `explorer.hapinas.net` Tagalog lexical database, once its export is stable and its provenance is itself documented at the same level of detail as this file.
 - A `data/sources.json` registry so each answer can carry a per-entry source tag once the v2 lists exist.
 
-Until any of those land, the source for every word in this repository is: one Filipino speaker, sitting down with a text editor, writing words she knows.
+Until formal source tags land, the source for every shipped word in this repository is: reviewed by one Filipino speaker, sitting down with a text editor and accepting only words she is willing to defend.
 
 ## What each word had to meet
 
@@ -39,7 +39,7 @@ Every entry in `answers.json` had to satisfy all of these:
 - **One canonical spelling.** Where Tagalog tolerates spelling variants (e.g. `kotse` vs the older `coche`), the entry uses the form currently taught in Filipino-medium schools.
 - **A real English gloss.** Not a translation in scare quotes. If a word has no clean one-line English equivalent (`kilig`, `tampo`, `bayanihan`), the gloss says so and the `note` field gives the reader a real handhold.
 
-`guesses.json` is broader. It contains plausible 5-letter Tagalog words a player might reach for during play — common nouns, verbs, adjectives, place names, naturalised loans — that did not make the daily-answer cut. Same orthographic constraints apply, but no `pos` and no gloss are required because these words never surface in the result modal.
+`guesses.json` is broader. It contains plausible 5-letter Tagalog words a player might reach for during play: common nouns, verbs, adjectives, particles, place names, naturalised loans, and a few common colloquial forms that did not make the daily-answer cut. Same orthographic constraints apply, but no `pos` and no gloss are required because these words never surface in the result modal.
 
 ## What this list is not
 
@@ -51,7 +51,7 @@ Every entry in `answers.json` had to satisfy all of these:
 
 ## How to suggest a word
 
-Open an issue at [github.com/fish-and-bear/hoolah/issues](https://github.com/fish-and-bear/hoolah/issues) with the word, a one-line gloss, a part of speech tag, and a citation. A citation can be a dictionary entry, a Wiktionary URL, a news article, a literary use, a textbook page — anything reproducible that lets the maintainer confirm the word exists in the form you've spelled it.
+Open an issue at [github.com/fish-and-bear/hoolah/issues](https://github.com/fish-and-bear/hoolah/issues) with the word, a one-line gloss, a part of speech tag, and a citation. A citation can be a dictionary entry, a Wiktionary URL, a news article, a literary use, a textbook page, or anything reproducible that lets the maintainer confirm the word exists in the form you've spelled it.
 
 The current review path is one person:
 
@@ -72,6 +72,8 @@ Both of those are facts about the rotation, not the wordlist content. The contra
 
 ## A short history
 
-Initial v1 list: 154 answers, 425 extra accepted guesses. Hand-curated over a single weekend in May 2026 by [Angelica Naguio](https://angelicanaguio.com) ahead of the 1 June 2026 launch. No external imports. All entries reviewed against the criteria above before commit.
+Initial v1 list: 154 answers, 425 accepted guesses total (271 beyond the answer list). Hand-curated over a single weekend in May 2026 by [Angelica Naguio](https://angelicanaguio.com) ahead of the 30 May 2026 launch. All entries reviewed against the criteria above before commit.
+
+30 May 2026 expansion: 311 answers, 627 accepted guesses total (316 beyond the answer list). Added 157 researched daily-answer candidates and 45 accepted guess-only words, all reviewed against the same 5-letter, modern-orthography, everyday-play criteria.
 
 This document is the source of truth for "where do the words come from." If a contributor, journalist, recruiter, or curious player asks, point them here.

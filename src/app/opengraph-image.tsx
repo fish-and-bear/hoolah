@@ -4,7 +4,7 @@ import { ImageResponse } from 'next/og';
 // pre-render it once at build time and serve as a flat PNG.
 export const dynamic = 'force-static';
 
-export const alt = 'hoolah — a daily Filipino word game';
+export const alt = 'hoolah, a daily Filipino word game';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -50,7 +50,7 @@ export default function OG() {
             fontWeight: 700,
             fontSize: 240,
             color: '#5B0E11',
-            letterSpacing: '-0.04em',
+            letterSpacing: 0,
             lineHeight: 1,
             marginBottom: 24,
           }}
@@ -63,7 +63,7 @@ export default function OG() {
             fontSize: 30,
             color: 'rgba(14, 14, 14, 0.65)',
             marginBottom: 56,
-            letterSpacing: '0.04em',
+            letterSpacing: 0,
             textTransform: 'lowercase',
           }}
         >
