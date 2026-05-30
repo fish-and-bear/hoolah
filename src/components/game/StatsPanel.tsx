@@ -41,13 +41,12 @@ export default function StatsPanel({
         {Array.from({ length: MAX_GUESSES }, (_, i) => {
           const tries = i + 1;
           const count = stats.histogram[i] ?? 0;
-          const widthPct =
-            count > 0 ? (count / denom) * 100 : 0;
+          const widthPct = count > 0 ? (count / denom) * 100 : 7;
           const isMostRecent = highlight === tries;
           return (
             <li
               key={tries}
-              className="grid grid-cols-[14px_1fr] items-center gap-[4px] text-sm tabular-nums"
+              className="grid grid-cols-[16px_minmax(0,1fr)] items-center gap-[4px] text-sm tabular-nums"
               aria-label={copy.rowAria(tries, count)}
             >
               <span
@@ -57,15 +56,12 @@ export default function StatsPanel({
               >
                 {tries}
               </span>
-              <div className="h-[20px] relative">
+              <div className="relative h-[20px] w-full overflow-hidden">
                 <div
-                  className="absolute inset-y-0 left-0 flex items-center justify-end px-[8px] text-xs font-bold"
+                  className="flex h-full min-w-[24px] items-center justify-end px-[7px] text-xs font-bold"
                   style={{
-                    width:
-                      count > 0
-                        ? `max(24px, ${widthPct}%)`
-                        : '24px',
-                    background: isMostRecent
+                    width: `${widthPct}%`,
+                    backgroundColor: isMostRecent
                       ? '#6aaa64'
                       : '#787c7e',
                     color: '#fff',

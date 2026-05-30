@@ -1,6 +1,6 @@
 # hoolah
 
-A daily five-letter Tagalog word game. Five letters, six tries, one new word every midnight in Manila time.
+A daily five-letter Tagalog word game. Five letters, six tries, one new word every midnight.
 
 Live site: [hoolah.hapinas.net](https://hoolah.hapinas.net)
 
@@ -17,7 +17,7 @@ Built as a real product, not a demo. It is a Progressive Web App, runs entirely 
 - An EB Garamond italic wordmark on an oxblood, ivory, ink and gold palette
 - Deterministic, client-side daily-word selection (seeded permutation, no server needed)
 - localStorage-backed game state, stats, settings, and streak
-- Hard mode, dark mode, reduced-motion mode, keyboard control, screen-reader announcements
+- Local-midnight daily reset, hard mode, dark mode, reduced-motion mode, keyboard control, screen-reader announcements
 - A service worker that pre-caches the app shell so an installed PWA opens offline
 - Open Graph card, sitemap, robots, and a `Game` Schema.org JSON-LD blob
 
@@ -58,9 +58,11 @@ pnpm run ci
 
 ## How the daily word works
 
-`EPOCH_DATE` in `src/lib/daily.ts` is set to 30 May 2026. The puzzle number for any given day is the count of days since the epoch (1-indexed). The answer rotation is a deterministic Fisher-Yates shuffle of the answer indices, seeded by `fnv1a("hoolah:v1:permutation")`, then indexed by puzzle number. That guarantees every word appears once before the list repeats, while keeping the order non-obvious and identical on every device without a server.
+`EPOCH_DATE` in `src/lib/daily.ts` is set to 30 May 2026. The puzzle number for any given day is the count of days since the epoch (1-indexed). The answer rotation is controlled by `src/data/rotation.json`; each epoch names a seed, a start puzzle, and the answer count it locks. Within an epoch, the game uses a deterministic Fisher-Yates shuffle of those answer indices. That guarantees every word appears once before the epoch repeats, while keeping the order non-obvious and identical on every device without a server.
 
-Manila time (`Asia/Manila`, UTC+8, no DST) is computed in the browser via `Intl.DateTimeFormat`, which means time-zone correctness does not depend on the host machine clock.
+When the daily answer list grows, add a new rotation epoch instead of editing an old one. That keeps already-played puzzle numbers stable.
+
+The daily word changes at the player's local midnight. Before the app advances the stored daily date, it asks the same static host for a `Date` header and uses that trusted instant with the player's current time zone. That blocks normal OS clock fast-forwarding from revealing tomorrow's puzzle. It is still a static app, so someone with devtools, source access, or cleared site data can bypass client-side protections.
 
 ## Word lists
 

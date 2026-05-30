@@ -10,9 +10,11 @@ import process from 'node:process';
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const answersPath = path.join(root, 'src/data/answers.json');
 const guessesPath = path.join(root, 'src/data/guesses.json');
+const rotationPath = path.join(root, 'src/data/rotation.json');
 
 const answers = JSON.parse(await fs.readFile(answersPath, 'utf8'));
 const guesses = JSON.parse(await fs.readFile(guessesPath, 'utf8'));
+const rotation = JSON.parse(await fs.readFile(rotationPath, 'utf8'));
 
 const errors = [];
 const wordRe = /^[a-z]{5}$/;
@@ -57,6 +59,51 @@ for (const g of guesses) {
 for (const a of answerSet) {
   if (!guessSet.has(a)) {
     errors.push(`Answer "${a}" missing from guess list.`);
+  }
+}
+
+if (!Array.isArray(rotation) || rotation.length === 0) {
+  errors.push('rotation.json must contain at least one rotation epoch.');
+} else {
+  let previousStart = 0;
+  for (const [i, epoch] of rotation.entries()) {
+    if (!epoch || typeof epoch !== 'object' || Array.isArray(epoch)) {
+      errors.push(`Rotation epoch ${i + 1} is not an object.`);
+      continue;
+    }
+    const { startPuzzle, answerCount, seed } = epoch;
+    if (!Number.isInteger(startPuzzle) || startPuzzle < 1) {
+      errors.push(`Rotation epoch ${i + 1} has invalid startPuzzle.`);
+    }
+    if (i === 0 && startPuzzle !== 1) {
+      errors.push('The first rotation epoch must start at puzzle 1.');
+    }
+    if (Number.isInteger(startPuzzle) && startPuzzle <= previousStart) {
+      errors.push('Rotation epochs must be sorted by startPuzzle.');
+    }
+    if (!Number.isInteger(answerCount) || answerCount < 1) {
+      errors.push(`Rotation epoch ${i + 1} has invalid answerCount.`);
+    } else if (answerCount > answerSet.size) {
+      errors.push(
+        `Rotation epoch ${i + 1} uses ${answerCount} answers, but only ${answerSet.size} exist.`
+      );
+    }
+    if (typeof seed !== 'string' || seed.length === 0) {
+      errors.push(`Rotation epoch ${i + 1} has invalid seed.`);
+    }
+    if (Number.isInteger(startPuzzle)) previousStart = startPuzzle;
+  }
+
+  const latest = rotation.at(-1);
+  if (
+    latest &&
+    typeof latest === 'object' &&
+    !Array.isArray(latest) &&
+    latest.answerCount !== answerSet.size
+  ) {
+    errors.push(
+      `Latest rotation epoch uses ${latest.answerCount} answers, but answers.json has ${answerSet.size}. Add a new rotation epoch when changing the daily answer count.`
+    );
   }
 }
 

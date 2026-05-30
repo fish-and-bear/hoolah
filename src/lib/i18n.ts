@@ -103,7 +103,7 @@ const en = {
     presentExample: 'is in the word but somewhere else.',
     absentExample: 'None of these letters are in the word.',
     footerBeforeLink:
-      'A new word every day at midnight, Manila time. Only the 26-letter Latin alphabet (no diacritics). See',
+      'A new word every day at midnight in your local time. Only the 26-letter Latin alphabet (no diacritics). See',
     footerLink: '/rules',
     footerAfterLink: 'for hard mode and accessibility notes.',
   },
@@ -125,7 +125,7 @@ const en = {
     lossHeadline: 'maybe tomorrow.',
     fastSubhead: 'A clean solve.',
     winSubhead: 'A solve is a solve.',
-    lossSubhead: 'The streak resets at midnight Manila time.',
+    lossSubhead: 'The streak resets at midnight.',
     streakAlive: (days: number) => `Streak alive at ${days} days.`,
     streakRecord: (days: number) =>
       `Your ${days}-day streak is on the record. The next one starts tomorrow.`,
@@ -182,7 +182,7 @@ const en = {
         'Toggle it in settings. Once on, every revealed green tile must be reused in its slot and every revealed yellow letter must appear somewhere in your next guess. Hard mode can only be toggled before you start the daily, or between days.',
       oneHeading: 'one word a day',
       one:
-        'A new daily word goes live at midnight Manila time (UTC+8). The countdown to the next word shows up in the result modal after you finish. There is only one playable puzzle each day.',
+        "A new daily word goes live at midnight in the player's local time. The countdown to the next word shows up in the result modal after you finish. There is only one playable puzzle each day.",
       accessibilityHeading: 'accessibility',
       accessibility: [
         'All controls are operable from a physical keyboard. Tab moves focus; the focus ring uses the oxblood accent on a 2px outline.',
@@ -297,7 +297,7 @@ export const COPY = {
       presentExample: 'ay nasa salita pero nasa ibang puwesto.',
       absentExample: 'Wala sa salita ang mga letrang ito.',
       footerBeforeLink:
-        'May bagong salita araw-araw tuwing hatinggabi, oras ng Maynila. Alpabetong Latin na may 26 letra lang muna (walang tuldik). Basahin ang',
+        'May bagong salita araw-araw tuwing hatinggabi sa lokal mong oras. Alpabetong Latin na may 26 letra lang muna (walang tuldik). Basahin ang',
       footerLink: '/rules',
       footerAfterLink: 'para sa mahirap na mode at tala sa pagiging accessible.',
     },
@@ -320,7 +320,7 @@ export const COPY = {
       fastSubhead: 'Ang bilis mong nakuha.',
       winSubhead: 'Nakuha pa rin.',
       lossSubhead:
-        'Magre-reset ang sunod-sunod na panalo sa hatinggabi, oras ng Maynila.',
+        'Magre-reset ang sunod-sunod na panalo sa hatinggabi.',
       streakAlive: (days: number) =>
         `Tuloy ang sunod-sunod na panalo sa ${days} araw.`,
       streakRecord: (days: number) =>
@@ -376,7 +376,7 @@ export const COPY = {
           'I-on ito sa mga setting. Kapag naka-on, kailangang gamitin ulit ang bawat berdeng tile sa tamang puwesto at kailangang lumitaw sa susunod mong hula ang bawat dilaw na letra. Puwede lang palitan ang mahirap na mode bago mo simulan ang arawang puzzle, o sa pagitan ng mga araw.',
         oneHeading: 'isang salita bawat araw',
         one:
-          'May bagong arawang salita tuwing hatinggabi, oras ng Maynila (UTC+8). Lalabas ang natitirang oras sa modal ng resulta pagkatapos mong matapos. Isang puzzle lang ang puwedeng laruin bawat araw.',
+          'May bagong arawang salita tuwing hatinggabi sa lokal mong oras. Lalabas ang natitirang oras sa modal ng resulta pagkatapos mong matapos. Isang puzzle lang ang puwedeng laruin bawat araw.',
         accessibilityHeading: 'pagiging accessible',
         accessibility: [
           'Lahat ng kontrol ay gumagana gamit ang pisikal na keyboard. Ang Tab ang naglilipat ng focus; ang focus ring ay 2px outline gamit ang oxblood accent.',

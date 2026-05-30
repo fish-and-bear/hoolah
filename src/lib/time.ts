@@ -1,33 +1,66 @@
-// hoolah's 'today' is Asia/Manila (UTC+8, no DST). The whole site is
-// static, so the date string has to be derived in the browser. We
-// format using Intl with a hard-coded timeZone so the value matches
-// whether the player is in Manila, Hong Kong, or Toronto.
+// The whole site is static, so the daily date string has to be derived
+// in the browser. The game uses the player's local calendar, guarded
+// by a same-origin host Date check before advancing days.
 
-const TZ = 'Asia/Manila';
-
-export function manilaDateString(date: Date = new Date()): string {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: TZ,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(date);
-  const y = parts.find((p) => p.type === 'year')?.value ?? '1970';
-  const m = parts.find((p) => p.type === 'month')?.value ?? '01';
-  const d = parts.find((p) => p.type === 'day')?.value ?? '01';
-  return `${y}-${m}-${d}`;
+function pad2(value: number): string {
+  return value.toString().padStart(2, '0');
 }
 
-// Milliseconds until the next Manila midnight (when the next hoolah
-// becomes available). Used for the countdown shown in the end modal.
-export function msUntilNextManilaMidnight(now: Date = new Date()): number {
-  const todayStr = manilaDateString(now);
-  // Construct a UTC instant equal to 'tomorrow 00:00 in Manila', which
-  // is exactly today 16:00 UTC (since Manila is UTC+8 year-round).
-  const [y, m, d] = todayStr.split('-').map(Number);
-  // 00:00 Manila on (date+1) = 16:00 UTC on (date).
-  const nextMidnightUtc = Date.UTC(y, m - 1, d, 16, 0, 0, 0);
-  return Math.max(0, nextMidnightUtc - now.getTime());
+export function localDateString(date: Date = new Date()): string {
+  return [
+    date.getFullYear(),
+    pad2(date.getMonth() + 1),
+    pad2(date.getDate()),
+  ].join('-');
+}
+
+export function zonedDateString(date: Date, timeZone: string): string | null {
+  try {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(date);
+    const y = parts.find((p) => p.type === 'year')?.value ?? '1970';
+    const m = parts.find((p) => p.type === 'month')?.value ?? '01';
+    const d = parts.find((p) => p.type === 'day')?.value ?? '01';
+    return `${y}-${m}-${d}`;
+  } catch {
+    return null;
+  }
+}
+
+export function currentTimeZone(): string | null {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+  } catch {
+    return null;
+  }
+}
+
+export function localDateStringForInstant(
+  date: Date,
+  timeZone = currentTimeZone()
+): string {
+  if (timeZone) {
+    const zoned = zonedDateString(date, timeZone);
+    if (zoned) return zoned;
+  }
+  return localDateString(date);
+}
+
+export function msUntilNextLocalMidnight(now: Date = new Date()): number {
+  const next = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + 1,
+    0,
+    0,
+    0,
+    0
+  );
+  return Math.max(0, next.getTime() - now.getTime());
 }
 
 export function formatCountdown(ms: number): string {

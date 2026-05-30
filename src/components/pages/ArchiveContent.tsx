@@ -1,23 +1,40 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+
 import { useLocale } from '@/components/i18n/useLocale';
-import { formatDisplayDate, formatShortDate } from '@/lib/i18n';
+import answersData from '@/data/answers.json';
+import { archiveItemsForDate, type ArchiveItem } from '@/lib/archive';
+import { guardedLocalDateString } from '@/lib/clock';
 import { EPOCH_DATE } from '@/lib/daily';
+import { formatDisplayDate, formatShortDate } from '@/lib/i18n';
 import type { AnswerEntry } from '@/lib/types';
 
-export interface ArchiveItem {
-  date: string;
-  puzzleNumber: number;
-  entry: AnswerEntry;
-}
+const answers = answersData as AnswerEntry[];
 
-interface ArchiveContentProps {
-  items: ArchiveItem[];
-}
-
-export default function ArchiveContent({ items }: ArchiveContentProps) {
+export default function ArchiveContent() {
   const { locale, copy } = useLocale();
   const page = copy.pages.archive;
+  const [items, setItems] = useState<ArchiveItem[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const sync = () => {
+      void (async () => {
+        const today = await guardedLocalDateString();
+        if (!cancelled) setItems(archiveItemsForDate(today, answers));
+      })();
+    };
+
+    sync();
+    const interval = window.setInterval(sync, 60_000);
+    window.addEventListener('storage', sync);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      window.removeEventListener('storage', sync);
+    };
+  }, []);
 
   return (
     <main className="prose-style mx-auto w-full max-w-[42rem] flex-1 px-5 py-8 sm:px-6 sm:py-10 md:py-12">

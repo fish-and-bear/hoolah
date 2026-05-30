@@ -1,14 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { formatCountdown, msUntilNextManilaMidnight } from '@/lib/time';
+import { formatCountdown, msUntilNextLocalMidnight } from '@/lib/time';
 
 export default function Countdown() {
   const [ms, setMs] = useState<number | null>(null);
 
   useEffect(() => {
     function tick() {
-      setMs(msUntilNextManilaMidnight());
+      setMs(msUntilNextLocalMidnight());
     }
     tick();
     const id = window.setInterval(tick, 1000);

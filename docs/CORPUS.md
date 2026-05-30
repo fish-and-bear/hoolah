@@ -65,12 +65,15 @@ There is no automated merge path. Candidate gathering can use scripts or public 
 
 ## Stability of the rotation
 
-The order in which answers appear as daily puzzles is a deterministic Fisher-Yates shuffle of `answers.json`, seeded by the constant string `hoolah:v1:permutation` and computed against `answers.length`. Two consequences worth knowing:
+The order in which answers appear as daily puzzles is controlled by `src/data/rotation.json`. Each rotation epoch names a start puzzle, an answer count, and a seed. Inside that epoch, the game uses a deterministic Fisher-Yates shuffle of the first `answerCount` entries in `answers.json`.
 
-- Inserting or removing a word in `answers.json` reshuffles every day from that point forward. Day 42 yesterday is not day 42 after the edit.
-- Renaming or correcting a word in place (without changing the list length) keeps the rotation order intact, but day N is now a different word for any player who has already seen the old day N.
+The rule for contributors is simple:
 
-Both of those are facts about the rotation, not the wordlist content. The contract the game makes with players is: today's word is the same word for everyone on every device. Edits to the answer list keep that contract for tomorrow, but they break it retroactively. Edits get batched and timed accordingly.
+- Do not edit an existing rotation epoch after launch.
+- Do not remove or reorder answer entries that have already shipped.
+- When `answers.json` grows, add a new future rotation epoch that uses the new answer count.
+
+That keeps day 42 as day 42, even after the corpus grows. Renaming or correcting a word in place still changes the word shown for its scheduled day, so content edits to shipped answers should be rare and deliberate.
 
 ## A short history
 

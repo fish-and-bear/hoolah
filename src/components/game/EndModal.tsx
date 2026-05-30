@@ -2,7 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { COPY } from '@/lib/i18n';
-import type { AnswerEntry, GameSnapshot, Locale, Stats } from '@/lib/types';
+import type {
+  AnswerEntry,
+  GameSnapshot,
+  Locale,
+  Stats,
+} from '@/lib/types';
 import { buildShareText, shareOrCopy } from '@/lib/share';
 import { judgeGuess } from '@/lib/game';
 import Countdown from './Countdown';

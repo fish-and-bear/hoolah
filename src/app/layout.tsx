@@ -2,6 +2,15 @@ import type { Metadata, Viewport } from 'next';
 import { EB_Garamond, Inter_Tight } from 'next/font/google';
 
 import RegisterSW from '@/components/pwa/RegisterSW';
+import {
+  CREATOR_URL,
+  OG_IMAGE,
+  SEO_DESCRIPTION,
+  SEO_TITLE,
+  SITE_CREATOR,
+  SITE_NAME,
+  SITE_URL,
+} from '@/lib/site';
 import '@/styles/globals.css';
 
 // Self-hosted Google Fonts via next/font: weights pared down to what
@@ -33,31 +42,20 @@ const sans = Inter_Tight({
   fallback: ['-apple-system', 'BlinkMacSystemFont', 'Helvetica Neue', 'sans-serif'],
 });
 
-const SITE_URL = 'https://hoolah.hapinas.net';
-const TAGLINE = 'guess the Filipino word';
-
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'hoolah',
+    default: SEO_TITLE,
     template: '%s | hoolah',
   },
-  description: `${TAGLINE}. A daily five-letter Tagalog word game.`,
-  applicationName: 'hoolah',
-  keywords: [
-    'Tagalog',
-    'Filipino',
-    'Wordle',
-    'word game',
-    'puzzle',
-    'salita',
-    'hoolah',
-    'daily',
-  ],
-  authors: [{ name: 'Angelica Naguio', url: 'https://angelicanaguio.com' }],
-  creator: 'Angelica Naguio',
+  description: SEO_DESCRIPTION,
+  applicationName: SITE_NAME,
+  authors: [{ name: SITE_CREATOR, url: CREATOR_URL }],
+  creator: SITE_CREATOR,
+  publisher: SITE_CREATOR,
+  category: 'game',
   manifest: '/manifest.webmanifest',
-  alternates: { canonical: SITE_URL },
+  alternates: { canonical: '/' },
   icons: {
     icon: [
       { url: '/icon.svg', type: 'image/svg+xml' },
@@ -67,19 +65,21 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: 'website',
-    title: 'hoolah',
-    description: `${TAGLINE}. A daily five-letter Tagalog word game.`,
-    url: SITE_URL,
-    siteName: 'hoolah',
+    title: SEO_TITLE,
+    description: SEO_DESCRIPTION,
+    url: '/',
+    siteName: SITE_NAME,
     locale: 'en_US',
+    images: [OG_IMAGE],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'hoolah',
-    description: `${TAGLINE}. A daily five-letter Tagalog word game.`,
+    title: SEO_TITLE,
+    description: SEO_DESCRIPTION,
+    images: [OG_IMAGE.url],
   },
   appleWebApp: {
-    title: 'hoolah',
+    title: SITE_NAME,
     capable: true,
     statusBarStyle: 'black-translucent',
   },
@@ -138,19 +138,54 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               '@context': 'https://schema.org',
-              '@type': 'Game',
-              name: 'hoolah',
-              description: `${TAGLINE}. A daily five-letter Tagalog word game.`,
-              url: SITE_URL,
-              applicationCategory: 'Game',
-              operatingSystem: 'Any',
-              author: {
-                '@type': 'Person',
-                name: 'Angelica Naguio',
-                url: 'https://angelicanaguio.com',
-              },
-              inLanguage: ['tl', 'en'],
-              isAccessibleForFree: true,
+              '@graph': [
+                {
+                  '@type': 'Person',
+                  '@id': `${SITE_URL}/#creator`,
+                  name: SITE_CREATOR,
+                  url: CREATOR_URL,
+                },
+                {
+                  '@type': 'WebSite',
+                  '@id': `${SITE_URL}/#website`,
+                  name: SITE_NAME,
+                  alternateName: [
+                    'Filipino Wordle',
+                    'Tagalog Wordle',
+                    'Filipino word game',
+                    'Tagalog word game',
+                  ],
+                  description: SEO_DESCRIPTION,
+                  url: SITE_URL,
+                  inLanguage: ['en', 'fil', 'tl'],
+                  publisher: { '@id': `${SITE_URL}/#creator` },
+                },
+                {
+                  '@type': ['Game', 'WebApplication'],
+                  '@id': `${SITE_URL}/#game`,
+                  name: SITE_NAME,
+                  alternateName: [
+                    'Filipino Wordle-style game',
+                    'Tagalog Wordle-style game',
+                    'daily Filipino word game',
+                  ],
+                  description: SEO_DESCRIPTION,
+                  url: SITE_URL,
+                  applicationCategory: ['GameApplication', 'EducationalApplication'],
+                  operatingSystem: 'Any',
+                  genre: ['Word game', 'Educational game'],
+                  learningResourceType: 'game',
+                  teaches: ['Tagalog vocabulary', 'Filipino vocabulary'],
+                  author: { '@id': `${SITE_URL}/#creator` },
+                  inLanguage: ['en', 'fil', 'tl'],
+                  isAccessibleForFree: true,
+                  offers: {
+                    '@type': 'Offer',
+                    price: '0',
+                    priceCurrency: 'USD',
+                  },
+                },
+              ],
             }),
           }}
         />

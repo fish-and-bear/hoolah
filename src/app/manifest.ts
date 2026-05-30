@@ -1,12 +1,13 @@
 import type { MetadataRoute } from 'next';
+import { SEO_DESCRIPTION, SITE_NAME } from '@/lib/site';
 
 export const dynamic = 'force-static';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'hoolah',
-    short_name: 'hoolah',
-    description: 'a daily Filipino word game',
+    name: `${SITE_NAME}: Filipino Wordle-style Tagalog word game`,
+    short_name: SITE_NAME,
+    description: SEO_DESCRIPTION,
     start_url: '/',
     scope: '/',
     display: 'standalone',

@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { archiveItemsForDate } from '../src/lib/archive';
+import { resolveClockDate } from '../src/lib/clock';
 import { answerIndexFor, puzzleNumberFor } from '../src/lib/daily';
 import {
   hardModeViolation,
@@ -9,15 +11,21 @@ import {
   keyboardStateFromGuesses,
 } from '../src/lib/game';
 import { buildShareText } from '../src/lib/share';
-import { normalizeStats, recordDailyResult } from '../src/lib/stats';
+import {
+  ensureDailyResultRecorded,
+  normalizeStats,
+  recordDailyResult,
+} from '../src/lib/stats';
 import {
   daysBetween,
   formatCountdown,
-  manilaDateString,
-  msUntilNextManilaMidnight,
+  localDateString,
+  localDateStringForInstant,
+  msUntilNextLocalMidnight,
 } from '../src/lib/time';
 import {
   EMPTY_STATS,
+  type AnswerEntry,
   type GameSnapshot,
   type Settings,
   type Stats,
@@ -145,21 +153,140 @@ test('daily puzzle math is deterministic and cycles only after a full permutatio
   );
   assert.equal(new Set(firstCycle).size, 20);
   assert.equal(answerIndexFor(1, 20), answerIndexFor(21, 20));
+  assert.equal(answerIndexFor(1, 366), answerIndexFor(1, 500));
+  assert.equal(answerIndexFor(366, 366), answerIndexFor(366, 500));
 });
 
-test('Manila time helpers handle midnight boundaries and invalid dates', () => {
+test('archive shows only past daily-reset puzzles', () => {
+  const answers: AnswerEntry[] = Array.from({ length: 40 }, (_, i) => ({
+    word: `${String.fromCharCode(97 + (i % 26))}${String.fromCharCode(
+      97 + Math.floor(i / 26)
+    )}aaa`,
+    gloss: `word ${i}`,
+    pos: 'n',
+  }));
+
+  assert.deepEqual(archiveItemsForDate('2026-05-30', answers), []);
+
+  const firstPast = archiveItemsForDate('2026-05-31', answers);
+  assert.equal(firstPast.length, 1);
+  assert.equal(firstPast[0].puzzleNumber, 1);
+  assert.equal(firstPast[0].date, '2026-05-30');
+
+  const later = archiveItemsForDate('2026-07-15', answers);
+  assert.equal(later.length, 30);
+  assert.equal(later[0].puzzleNumber, 46);
+  assert.equal(later.at(-1)?.puzzleNumber, 17);
+});
+
+test('time helpers handle local midnight and zoned calendar dates', () => {
   assert.equal(
-    manilaDateString(new Date('2026-05-29T16:00:00.000Z')),
+    localDateString(new Date(2026, 4, 30, 0, 0, 0)),
     '2026-05-30'
   );
   assert.equal(
-    msUntilNextManilaMidnight(new Date('2026-05-30T15:59:30.000Z')),
+    msUntilNextLocalMidnight(new Date(2026, 4, 30, 23, 59, 30)),
     30_000
+  );
+  assert.equal(
+    localDateStringForInstant(
+      new Date('2026-05-29T16:00:00.000Z'),
+      'Asia/Manila'
+    ),
+    '2026-05-30'
+  );
+  assert.equal(
+    localDateStringForInstant(
+      new Date('2026-05-30T06:30:00.000Z'),
+      'America/Los_Angeles'
+    ),
+    '2026-05-29'
   );
   assert.equal(daysBetween('2026-05-30', '2026-06-01'), 2);
   assert.equal(daysBetween('2026-02-31', '2026-03-01'), null);
   assert.equal(formatCountdown(3_661_000), '1h 1m');
   assert.equal(formatCountdown(61_000), '1m 1s');
+});
+
+test('guarded clock advances from trusted host dates, not local clock jumps', () => {
+  assert.deepEqual(
+    resolveClockDate({
+      observedLocalDate: '2026-05-30',
+      trustedLocalDate: '2026-05-30',
+      currentTimeZone: 'Asia/Manila',
+    }),
+    {
+      date: '2026-05-30',
+      timeZone: 'Asia/Manila',
+      source: 'host',
+    }
+  );
+
+  assert.deepEqual(
+    resolveClockDate({
+      storedDate: '2026-05-30',
+      storedTimeZone: 'Asia/Manila',
+      storedSource: 'host',
+      observedLocalDate: '2026-05-31',
+      currentTimeZone: 'Asia/Manila',
+    }),
+    {
+      date: '2026-05-30',
+      timeZone: 'Asia/Manila',
+      source: 'host',
+    }
+  );
+
+  assert.deepEqual(
+    resolveClockDate({
+      storedDate: '2026-05-30',
+      storedTimeZone: 'Asia/Manila',
+      storedSource: 'host',
+      observedLocalDate: '2026-05-31',
+      trustedLocalDate: '2026-05-31',
+      trustedStoredZoneDate: '2026-05-31',
+      currentTimeZone: 'Asia/Manila',
+    }),
+    {
+      date: '2026-05-31',
+      timeZone: 'Asia/Manila',
+      source: 'host',
+    }
+  );
+
+  assert.deepEqual(
+    resolveClockDate({
+      storedDate: '2026-05-30',
+      storedTimeZone: 'America/Los_Angeles',
+      storedSource: 'host',
+      observedLocalDate: '2026-05-31',
+      trustedLocalDate: '2026-05-31',
+      trustedStoredZoneDate: '2026-05-30',
+      currentTimeZone: 'Pacific/Kiritimati',
+    }),
+    {
+      date: '2026-05-30',
+      timeZone: 'America/Los_Angeles',
+      source: 'host',
+    }
+  );
+
+  assert.deepEqual(
+    resolveClockDate({
+      storedDate: '2026-06-02',
+      storedTimeZone: 'Asia/Manila',
+      storedSource: 'local',
+      observedLocalDate: '2026-06-02',
+      trustedLocalDate: '2026-05-31',
+      trustedStoredZoneDate: '2026-05-31',
+      currentTimeZone: 'Asia/Manila',
+    }),
+    {
+      date: '2026-05-31',
+      timeZone: 'Asia/Manila',
+      source: 'host',
+    }
+  );
 });
 
 test('stats normalize malformed storage and record daily results once', () => {
@@ -176,8 +303,8 @@ test('stats normalize malformed storage and record daily results once', () => {
 
   assert.equal(malformed.played, 1);
   assert.equal(malformed.wins, 1);
-  assert.equal(malformed.currentStreak, 3);
-  assert.equal(malformed.maxStreak, 3);
+  assert.equal(malformed.currentStreak, 1);
+  assert.equal(malformed.maxStreak, 1);
   assert.deepEqual(malformed.histogram, [0, 0, 0, 0, 0, 0]);
   assert.equal(malformed.lastWonOn, null);
   assert.deepEqual(malformed.recordedDailyKeys, ['daily:2026-05-30']);
@@ -224,6 +351,66 @@ test('stats normalize malformed storage and record daily results once', () => {
   assert.equal(loss.played, 3);
   assert.equal(loss.wins, 2);
   assert.equal(loss.currentStreak, 0);
+});
+
+test('stats repair completed daily snapshots without double-counting', () => {
+  const partialWin: Stats = {
+    ...EMPTY_STATS,
+    played: 1,
+    wins: 1,
+    lastWonOn: '2026-05-30',
+    lastPlayedOn: '2026-05-30',
+  };
+  const repaired = ensureDailyResultRecorded(
+    partialWin,
+    snapshot({ guesses: ['bawal', 'sulat', 'galit'] })
+  );
+
+  assert.equal(repaired.played, 1);
+  assert.equal(repaired.wins, 1);
+  assert.equal(repaired.currentStreak, 1);
+  assert.equal(repaired.maxStreak, 1);
+  assert.deepEqual(repaired.histogram, [0, 0, 1, 0, 0, 0]);
+  assert.deepEqual(repaired.recordedDailyKeys, ['daily:2026-05-30']);
+
+  const migratedWin: Stats = {
+    ...EMPTY_STATS,
+    played: 4,
+    wins: 3,
+    currentStreak: 2,
+    maxStreak: 3,
+    histogram: [0, 1, 0, 1, 1, 0],
+    lastWonOn: '2026-05-30',
+    lastPlayedOn: '2026-05-30',
+  };
+  const unchanged = ensureDailyResultRecorded(
+    migratedWin,
+    snapshot({ guesses: ['bawal', 'galit'] })
+  );
+
+  assert.equal(unchanged.played, 4);
+  assert.equal(unchanged.wins, 3);
+  assert.deepEqual(unchanged.histogram, migratedWin.histogram);
+  assert.deepEqual(unchanged.recordedDailyKeys, ['daily:2026-05-30']);
+
+  const repairedLoss = ensureDailyResultRecorded(
+    {
+      ...EMPTY_STATS,
+      played: 2,
+      wins: 2,
+      histogram: [1, 1, 0, 0, 0, 0],
+      lastWonOn: '2026-05-29',
+      lastPlayedOn: '2026-05-30',
+    },
+    snapshot({
+      guesses: ['bawal', 'sulat', 'aklat', 'bahay', 'tubig', 'dagat'],
+      status: 'lost',
+    })
+  );
+
+  assert.equal(repairedLoss.played, 3);
+  assert.equal(repairedLoss.wins, 2);
+  assert.equal(repairedLoss.currentStreak, 0);
 });
 
 test('share text uses a compact Wordle-style clipboard block', () => {

@@ -8,12 +8,14 @@
 //
 // Bump CACHE_VERSION on each deploy to evict the previous cache.
 
-const CACHE_VERSION = 'hoolah-v1-20260530d';
+const CACHE_VERSION = 'hoolah-v1-20260530h';
 const APP_SHELL = ['/', '/about', '/rules', '/archive', '/manifest.webmanifest'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_VERSION).then((cache) => cache.addAll(APP_SHELL))
+    caches.open(CACHE_VERSION).then((cache) =>
+      Promise.all(APP_SHELL.map((url) => cache.add(url).catch(() => null)))
+    )
   );
   self.skipWaiting();
 });
@@ -41,8 +43,12 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(req)
         .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE_VERSION).then((c) => c.put(req, copy));
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE_VERSION)
+              .then((c) => c.put(req, copy))
+              .catch(() => null);
+          }
           return res;
         })
         .catch(() => caches.match(req).then((r) => r || caches.match('/')))
@@ -57,7 +63,9 @@ self.addEventListener('fetch', (event) => {
       return fetch(req).then((res) => {
         if (res.ok && res.type === 'basic') {
           const copy = res.clone();
-          caches.open(CACHE_VERSION).then((c) => c.put(req, copy));
+          caches.open(CACHE_VERSION)
+            .then((c) => c.put(req, copy))
+            .catch(() => null);
         }
         return res;
       });

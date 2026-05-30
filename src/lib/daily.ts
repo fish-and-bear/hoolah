@@ -1,4 +1,5 @@
-import { daysBetween, manilaDateString } from './time';
+import rotationData from '../data/rotation.json';
+import { daysBetween, localDateString } from './time';
 
 // The first hoolah ever shipped. Day 1 of the rotation. Do not change
 // this constant after launch; the puzzle number depends on it.
@@ -16,7 +17,7 @@ function fnv1a(str: string): number {
   return hash >>> 0;
 }
 
-// Puzzle number for a given Manila-local date string. 1-indexed.
+// Puzzle number for a given daily-reset date string. 1-indexed.
 // Returns null if the date is before the epoch (player has shifted
 // their clock).
 export function puzzleNumberFor(dateStr: string): number | null {
@@ -39,42 +40,58 @@ function mulberry32(seed: number) {
   };
 }
 
-// Memoize the shuffled permutation so we only pay the Fisher-Yates
-// cost once per process. Keyed by length so a future answer-list
-// resize triggers a fresh shuffle, but in practice the seed string
-// and length are both part of the launched identity (see below).
-let cachedPermutation: { length: number; order: Int32Array } | null = null;
+interface RotationEpoch {
+  startPuzzle: number;
+  answerCount: number;
+  seed: string;
+}
+
+const ROTATION_EPOCHS = (rotationData as RotationEpoch[]).slice().sort(
+  (a, b) => a.startPuzzle - b.startPuzzle
+);
+
+// Memoize shuffled permutations so we only pay the Fisher-Yates cost
+// once per process. Keyed by seed and count because future rotation
+// epochs can intentionally introduce new answer-list sizes without
+// rewriting older puzzle numbers.
+const cachedPermutations = new Map<string, Int32Array>();
 
 // Build a deterministic shuffled permutation of [0..answerCount).
-// The seed string and answerCount together define the rotation that
-// every player sees. NEVER change the seed string after launch, and
-// avoid changing the answer-list length, since either change
-// re-shuffles the rotation for every installed client.
-function permutationFor(answerCount: number): Int32Array {
-  if (cachedPermutation && cachedPermutation.length === answerCount) {
-    return cachedPermutation.order;
-  }
+// The epoch seed and answer count together define that epoch's order.
+function permutationFor(answerCount: number, seed: string): Int32Array {
+  const cacheKey = `${seed}:${answerCount}`;
+  const cached = cachedPermutations.get(cacheKey);
+  if (cached) return cached;
+
   const order = new Int32Array(answerCount);
   for (let i = 0; i < answerCount; i++) order[i] = i;
-  const rng = mulberry32(fnv1a('hoolah:v1:permutation'));
+  const rng = mulberry32(fnv1a(seed));
   for (let i = answerCount - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
     const tmp = order[i];
     order[i] = order[j];
     order[j] = tmp;
   }
-  cachedPermutation = { length: answerCount, order };
+  cachedPermutations.set(cacheKey, order);
   return order;
+}
+
+function epochForPuzzleNumber(puzzleNumber: number): RotationEpoch {
+  let selected = ROTATION_EPOCHS[0];
+  for (const epoch of ROTATION_EPOCHS) {
+    if (epoch.startPuzzle <= puzzleNumber) selected = epoch;
+  }
+  return selected;
 }
 
 // Index into the answer array for a given puzzle number.
 //
-// Implementation: a seeded Fisher-Yates shuffle of [0..answerCount),
-// computed once and memoized by length, indexed by (puzzleNumber - 1)
-// mod answerCount. This guarantees every word appears exactly once
-  // before any word repeats, i.e. the first repeat is day answerCount+1,
-// not "somewhere around day 15" as the previous fnv % length approach
-// produced via the birthday paradox.
+// Implementation: each rotation epoch names an answer-count and seed.
+// Within that epoch, a seeded Fisher-Yates shuffle of [0..answerCount)
+// is indexed by puzzle offset. This guarantees every word in that
+// epoch appears exactly once before the epoch repeats, while letting
+// future word-list expansions start a new epoch without changing older
+// puzzle numbers.
 //
 // Properties:
 //   - Deterministic across all clients and build environments.
@@ -83,21 +100,30 @@ function permutationFor(answerCount: number): Int32Array {
 //   - Pure: same (puzzleNumber, answerCount) always returns the same
 //     index, with no observable global state from the caller's side.
 //
-// The seed string `'hoolah:v1:permutation'` is part of the launched
-// version's identity. Do not change it.
+// Rotation epochs are source-controlled in src/data/rotation.json. Do
+// not edit an existing epoch after launch; add a later epoch instead.
 export function answerIndexFor(
   puzzleNumber: number,
   answerCount: number
 ): number {
   if (answerCount <= 0) return 0;
-  const order = permutationFor(answerCount);
-  return order[(puzzleNumber - 1) % answerCount];
+  const epoch = epochForPuzzleNumber(puzzleNumber);
+  const epochAnswerCount = Math.min(answerCount, epoch.answerCount);
+  if (epochAnswerCount <= 0) return 0;
+  const order = permutationFor(epochAnswerCount, epoch.seed);
+  return order[(puzzleNumber - epoch.startPuzzle) % epochAnswerCount];
 }
 
-export function todaysPuzzleKey(): {
+export function dailyPuzzleKeyForDate(date: string): {
   date: string;
   puzzleNumber: number | null;
 } {
-  const date = manilaDateString();
   return { date, puzzleNumber: puzzleNumberFor(date) };
+}
+
+export function todaysPuzzleKey(date = localDateString()): {
+  date: string;
+  puzzleNumber: number | null;
+} {
+  return dailyPuzzleKeyForDate(date);
 }

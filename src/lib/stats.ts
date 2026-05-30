@@ -34,8 +34,11 @@ export function normalizeStats(value: Partial<Stats> | null | undefined): Stats 
   const normalizedHistogram = histogramTotal <= wins
     ? histogram
     : EMPTY_STATS.histogram;
-  const currentStreak = normalizeCount(raw.currentStreak);
-  const maxStreak = Math.max(normalizeCount(raw.maxStreak), currentStreak);
+  const currentStreak = Math.min(normalizeCount(raw.currentStreak), wins);
+  const maxStreak = Math.min(
+    Math.max(normalizeCount(raw.maxStreak), currentStreak),
+    wins
+  );
   return {
     ...EMPTY_STATS,
     ...raw,
@@ -66,23 +69,18 @@ export function snapshotWasRecorded(
   return stats.recordedDailyKeys.includes(snapshot.key);
 }
 
-export function markSnapshotRecorded(
-  stats: Stats,
-  snapshot: GameSnapshot
-): Stats {
-  if (snapshotWasRecorded(stats, snapshot)) return stats;
-  return {
-    ...stats,
-    recordedDailyKeys: [...stats.recordedDailyKeys, snapshot.key],
-  };
+function canRecordDailyResult(snapshot: GameSnapshot): boolean {
+  return (
+    snapshot.mode === 'daily' &&
+    snapshot.puzzleNumber !== null &&
+    snapshot.status !== 'in-progress'
+  );
 }
 
 export function recordDailyResult(stats: Stats, snapshot: GameSnapshot): Stats {
   const base = normalizeStats(stats);
   if (
-    snapshot.mode !== 'daily' ||
-    snapshot.puzzleNumber === null ||
-    snapshot.status === 'in-progress' ||
+    !canRecordDailyResult(snapshot) ||
     snapshotWasRecorded(base, snapshot)
   ) {
     return base;
@@ -115,4 +113,64 @@ export function recordDailyResult(stats: Stats, snapshot: GameSnapshot): Stats {
   }
   next.lastPlayedOn = snapshot.dateIssued;
   return next;
+}
+
+export function ensureDailyResultRecorded(
+  stats: Stats,
+  snapshot: GameSnapshot
+): Stats {
+  const base = normalizeStats(stats);
+  if (!canRecordDailyResult(snapshot) || snapshotWasRecorded(base, snapshot)) {
+    return base;
+  }
+
+  const playedSameDay =
+    base.lastPlayedOn === snapshot.dateIssued && base.played > 0;
+  if (!playedSameDay) return recordDailyResult(base, snapshot);
+
+  const next: Stats = {
+    ...base,
+    histogram: [...base.histogram] as Stats['histogram'],
+    recordedDailyKeys: [...base.recordedDailyKeys, snapshot.key].slice(
+      -MAX_RECORDED_DAILY_KEYS
+    ),
+  };
+
+  if (snapshot.status === 'won') {
+    const guessesUsed = snapshot.guesses.length;
+    const histogramIndex = guessesUsed - 1;
+    const histogramTotal = base.histogram.reduce((sum, n) => sum + n, 0);
+    const winAlreadyInTotals =
+      base.lastWonOn === snapshot.dateIssued && base.wins > 0;
+
+    if (!winAlreadyInTotals) {
+      next.wins = Math.min(base.played, base.wins + 1);
+    }
+
+    if (
+      histogramIndex >= 0 &&
+      histogramIndex < next.histogram.length &&
+      histogramTotal < next.wins
+    ) {
+      next.histogram[histogramIndex] = next.histogram[histogramIndex] + 1;
+    }
+
+    const dayGap = base.lastWonOn
+      ? daysBetween(base.lastWonOn, snapshot.dateIssued)
+      : null;
+    if (base.lastWonOn === snapshot.dateIssued) {
+      next.currentStreak = Math.max(base.currentStreak, 1);
+    } else {
+      next.currentStreak = dayGap === 1 ? base.currentStreak + 1 : 1;
+    }
+    next.maxStreak = Math.max(next.maxStreak, next.currentStreak);
+    next.lastWonOn = snapshot.dateIssued;
+  } else if (base.played > base.wins) {
+    next.currentStreak = 0;
+  } else {
+    return recordDailyResult(base, snapshot);
+  }
+
+  next.lastPlayedOn = snapshot.dateIssued;
+  return normalizeStats(next);
 }

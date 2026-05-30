@@ -30,7 +30,7 @@ export interface GameSnapshot {
   // Unique key. For daily mode: 'daily:YYYY-MM-DD'.
   key: string;
   mode: GameMode;
-  // ISO date string (Asia/Manila) when the puzzle was issued.
+  // ISO date string in the selected daily-reset calendar.
   dateIssued: string;
   // Puzzle number, daily only: integer offset from EPOCH_DATE.
   puzzleNumber: number | null;
@@ -49,7 +49,7 @@ export interface Stats {
   maxStreak: number;
   // index 0 = won in 1 try, ..., index 5 = won in 6 tries
   histogram: [number, number, number, number, number, number];
-  // ISO date (Asia/Manila) of the last won daily puzzle.
+  // ISO date in the selected daily-reset calendar of the last won daily puzzle.
   lastWonOn: string | null;
   // ISO date of the last played daily puzzle (win OR loss). Used to
   // decide whether the streak survives or resets.

@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import answersData from '@/data/answers.json';
 import guessesData from '@/data/guesses.json';
-import { answerIndexFor, todaysPuzzleKey } from '@/lib/daily';
+import { guardedLocalDateString } from '@/lib/clock';
+import { answerIndexFor, dailyPuzzleKeyForDate } from '@/lib/daily';
 import {
   hardModeViolation,
   isWin,
@@ -26,10 +27,11 @@ import {
   saveStats,
 } from '@/lib/storage';
 import {
-  markSnapshotRecorded,
+  ensureDailyResultRecorded,
   recordDailyResult,
   snapshotWasRecorded,
 } from '@/lib/stats';
+import { msUntilNextLocalMidnight } from '@/lib/time';
 import {
   DEFAULT_SETTINGS,
   EMPTY_STATS,
@@ -81,8 +83,8 @@ function freshSnapshot(p: ActivePuzzle, hardMode: boolean): GameSnapshot {
   };
 }
 
-function pickDailyPuzzle(): ActivePuzzle {
-  const { date, puzzleNumber } = todaysPuzzleKey();
+function pickDailyPuzzle(date: string): ActivePuzzle {
+  const { puzzleNumber } = dailyPuzzleKeyForDate(date);
   const idx = puzzleNumber != null
     ? answerIndexFor(puzzleNumber, answers.length)
     : 0;
@@ -94,6 +96,58 @@ function pickDailyPuzzle(): ActivePuzzle {
     puzzleNumber,
     answer: entry.word,
     entry,
+  };
+}
+
+function hydratePuzzle(
+  p: ActivePuzzle,
+  hardMode: boolean,
+  stats: Stats
+): {
+  snapshot: GameSnapshot;
+  stats: Stats;
+  shouldOpenEnd: boolean;
+  shouldHideTitle: boolean;
+  recordedKey: string | null;
+} {
+  const existing = loadGame(p.key);
+  if (existing && existing.answer === p.answer) {
+    let nextStats = stats;
+    let recordedKey: string | null = null;
+    let shouldOpenEnd = false;
+    let shouldHideTitle = false;
+
+    if (existing.status !== 'in-progress') {
+      if (
+        existing.mode === 'daily' &&
+        existing.puzzleNumber !== null &&
+        !snapshotWasRecorded(nextStats, existing)
+      ) {
+        nextStats = ensureDailyResultRecorded(nextStats, existing);
+        saveStats(nextStats);
+      }
+      recordedKey = existing.key;
+      shouldOpenEnd = true;
+      shouldHideTitle = true;
+    } else if (existing.guesses.length > 0) {
+      shouldHideTitle = true;
+    }
+
+    return {
+      snapshot: existing,
+      stats: nextStats,
+      shouldOpenEnd,
+      shouldHideTitle,
+      recordedKey,
+    };
+  }
+
+  return {
+    snapshot: freshSnapshot(p, hardMode),
+    stats,
+    shouldOpenEnd: false,
+    shouldHideTitle: false,
+    recordedKey: null,
   };
 }
 
@@ -152,6 +206,7 @@ export default function Game() {
 
   // Boot: hydrate settings/stats and load today's puzzle.
   useEffect(() => {
+    let cancelled = false;
     const s = loadSettings();
     let st = loadStats();
     setSettings(s);
@@ -162,42 +217,30 @@ export default function Game() {
       s.reducedMotion ? 'true' : 'false'
     );
 
-    const todaysPuzzle = pickDailyPuzzle();
-    setPuzzle(todaysPuzzle);
+    void (async () => {
+      const today = await guardedLocalDateString();
+      if (cancelled) return;
 
-    const existing = loadGame(todaysPuzzle.key);
-    if (existing && existing.answer === todaysPuzzle.answer) {
-      setSnapshot(existing);
-      // Returning players whose previous snapshot already wrapped up:
-      // pop the modal automatically.
-      if (existing.status !== 'in-progress') {
-        if (
-          existing.mode === 'daily' &&
-          existing.puzzleNumber !== null &&
-          !snapshotWasRecorded(st, existing)
-        ) {
-          st =
-            st.lastPlayedOn === existing.dateIssued
-              ? markSnapshotRecorded(st, existing)
-              : recordDailyResult(st, existing);
-          saveStats(st);
-        }
-        recordedKeys.current.add(existing.key);
-        setEndOpen(true);
-        setTitleVisible(false);
-      } else if (s.hasOpenedBefore && existing.guesses.length > 0) {
-        // Mid-game return: skip the title screen and resume.
-        setTitleVisible(false);
-      }
-    } else {
-      setSnapshot(freshSnapshot(todaysPuzzle, s.hardMode));
-    }
+      const todaysPuzzle = pickDailyPuzzle(today);
+      const hydrated = hydratePuzzle(todaysPuzzle, s.hardMode, st);
+      st = hydrated.stats;
 
-    // Trim old per-game entries.
-    pruneGames([todaysPuzzle.key]);
+      setPuzzle(todaysPuzzle);
+      setSnapshot(hydrated.snapshot);
+      if (hydrated.recordedKey) recordedKeys.current.add(hydrated.recordedKey);
+      if (hydrated.shouldOpenEnd) setEndOpen(true);
+      if (hydrated.shouldHideTitle) setTitleVisible(false);
 
-    setStats(st);
-    setMounted(true);
+      // Trim old per-game entries.
+      pruneGames([todaysPuzzle.key]);
+
+      setStats(st);
+      setMounted(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Apply theme/motion attributes when settings change.
@@ -224,6 +267,55 @@ export default function Game() {
   useEffect(() => {
     if (snapshot && mounted) saveGame(snapshot);
   }, [snapshot, mounted]);
+
+  // Roll to the next local-day puzzle while the app is open. The
+  // guarded clock refuses normal OS date jumps; the local timer only
+  // decides when to check.
+  useEffect(() => {
+    if (!mounted || !puzzle) return;
+    const currentPuzzle = puzzle;
+    let cancelled = false;
+
+    async function refreshDailyPuzzle() {
+      const today = await guardedLocalDateString();
+      if (cancelled || today === currentPuzzle.date) return;
+
+      const nextPuzzle = pickDailyPuzzle(today);
+      const hydrated = hydratePuzzle(
+        nextPuzzle,
+        settings.hardMode,
+        loadStats()
+      );
+
+      clearTimers();
+      submitLocked.current = false;
+      toastToken.current += 1;
+      if (hydrated.recordedKey) recordedKeys.current.add(hydrated.recordedKey);
+
+      setPuzzle(nextPuzzle);
+      setSnapshot(hydrated.snapshot);
+      setStats(hydrated.stats);
+      setCurrent('');
+      setRevealingRow(null);
+      setShakingRow(null);
+      setBouncingRow(null);
+      setToast(null);
+      setEndOpen(hydrated.shouldOpenEnd);
+      setTitleVisible(!hydrated.shouldHideTitle);
+      pruneGames([nextPuzzle.key]);
+    }
+
+    const nextMidnight = window.setTimeout(
+      refreshDailyPuzzle,
+      msUntilNextLocalMidnight() + 500
+    );
+    const interval = window.setInterval(refreshDailyPuzzle, 60_000);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(nextMidnight);
+      window.clearInterval(interval);
+    };
+  }, [clearTimers, mounted, puzzle, settings.hardMode]);
 
   const showToast = useCallback(
     (msg: string, ms = 1600) => {
