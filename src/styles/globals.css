@@ -9,8 +9,10 @@
   --hoolah-ink: #0e0e0e;
   --hoolah-gold: #d4a24c;
 
-  /* Tile colours. Sage green is intentionally desaturated; the
-     "Filipino flag green" is too bright for a serious editorial board. */
+  /* Tile colours, light theme. Sage green is intentionally desaturated;
+     the "Filipino flag green" is too bright for a serious editorial
+     board. Present (yellow) is a muted amber; absent is a charcoal that
+     clears WCAG AA against ivory text. */
   --hoolah-correct: #4f7942;
   --hoolah-present: #c8a04c;
   --hoolah-absent: #3a3a3a;
@@ -18,13 +20,17 @@
   /* Surface colours, light theme (default). */
   --hoolah-bg: var(--hoolah-ivory);
   --hoolah-fg: var(--hoolah-ink);
-  --hoolah-muted: rgba(14, 14, 14, 0.55);
-  --hoolah-rule: rgba(14, 14, 14, 0.12);
-  --hoolah-key-bg: rgba(14, 14, 14, 0.08);
-  --hoolah-key-bg-hover: rgba(14, 14, 14, 0.16);
+  /* Muted text bumped from 0.55 to 0.62 alpha so the secondary copy
+     and "absent" keyboard letters clear WCAG AA 4.5:1 on ivory. */
+  --hoolah-muted: rgba(14, 14, 14, 0.62);
+  --hoolah-rule: rgba(14, 14, 14, 0.14);
+  /* Keyboard background bumped slightly so unused keys are visible
+     against the ivory surface but still recede from the colored ones. */
+  --hoolah-key-bg: rgba(14, 14, 14, 0.10);
+  --hoolah-key-bg-hover: rgba(14, 14, 14, 0.18);
   --hoolah-key-fg: var(--hoolah-ink);
-  --hoolah-tile-border: rgba(14, 14, 14, 0.22);
-  --hoolah-tile-border-filled: rgba(14, 14, 14, 0.7);
+  --hoolah-tile-border: rgba(14, 14, 14, 0.28);
+  --hoolah-tile-border-filled: rgba(14, 14, 14, 0.72);
   --hoolah-tile-text-on-color: #ffffff;
   --hoolah-modal-bg: var(--hoolah-ivory);
   --hoolah-modal-overlay: rgba(14, 14, 14, 0.55);
@@ -35,17 +41,24 @@
 [data-theme='dark'] {
   --hoolah-bg: var(--hoolah-ink);
   --hoolah-fg: var(--hoolah-ivory);
-  --hoolah-muted: rgba(244, 237, 227, 0.55);
-  --hoolah-rule: rgba(244, 237, 227, 0.16);
-  --hoolah-key-bg: rgba(244, 237, 227, 0.08);
-  --hoolah-key-bg-hover: rgba(244, 237, 227, 0.18);
+  /* Dark-mode muted: ivory at 0.66 alpha. 0.55 was failing AA against
+     the near-black background for the smallest text. */
+  --hoolah-muted: rgba(244, 237, 227, 0.66);
+  --hoolah-rule: rgba(244, 237, 227, 0.18);
+  --hoolah-key-bg: rgba(244, 237, 227, 0.10);
+  --hoolah-key-bg-hover: rgba(244, 237, 227, 0.20);
   --hoolah-key-fg: var(--hoolah-ivory);
-  --hoolah-tile-border: rgba(244, 237, 227, 0.22);
-  --hoolah-tile-border-filled: rgba(244, 237, 227, 0.55);
+  --hoolah-tile-border: rgba(244, 237, 227, 0.28);
+  --hoolah-tile-border-filled: rgba(244, 237, 227, 0.6);
   --hoolah-modal-bg: #161616;
   --hoolah-modal-overlay: rgba(0, 0, 0, 0.7);
   --hoolah-accent: var(--hoolah-gold);
   --hoolah-accent-soft: rgba(212, 162, 76, 0.12);
+  /* Tile colours in dark mode are slightly brighter so the white tile
+     text reads against them; the light-mode hexes wash out on ink. */
+  --hoolah-correct: #5a8a4a;
+  --hoolah-present: #d5ad55;
+  --hoolah-absent: #4a4a4a;
 }
 
 html,
