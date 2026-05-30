@@ -4,19 +4,33 @@ import { EB_Garamond, Inter_Tight } from 'next/font/google';
 import RegisterSW from '@/components/pwa/RegisterSW';
 import '@/styles/globals.css';
 
+// Self-hosted Google Fonts via next/font: weights pared down to what
+// the design actually uses (serif 700 italic for the wordmark + 600/700
+// for headings; sans 400/500/600 for body/UI). Fewer weights = fewer
+// preload bytes. `display: swap` keeps text visible during the load;
+// `preload: true` on the wordmark italic makes the first paint use it.
 const serif = EB_Garamond({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['600', '700'],
   variable: '--font-serif',
   display: 'swap',
   style: ['normal', 'italic'],
+  preload: true,
+  // Local Georgia/Times fallback while the webfont swaps in. next/font
+  // emits the size-adjust metrics automatically when adjustFontFallback
+  // stays at its default; explicit override is left off so the
+  // generated metrics aren't fighting a hand-picked fallback.
+  fallback: ['Georgia', 'Times New Roman', 'serif'],
 });
 
 const sans = Inter_Tight({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '500', '600'],
+  style: ['normal', 'italic'],
   variable: '--font-sans',
   display: 'swap',
+  preload: true,
+  fallback: ['-apple-system', 'BlinkMacSystemFont', 'Helvetica Neue', 'sans-serif'],
 });
 
 const SITE_URL = 'https://hoolah.hapinas.net';
