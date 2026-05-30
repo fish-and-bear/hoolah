@@ -6,8 +6,8 @@ This document covers how the v1 word lists were assembled, what each word had to
 
 Two files under `src/data/`:
 
-- `answers.json`: 311 entries. Every entry has a `word`, a part of speech (`pos`), a one-line English `gloss`, and an optional `note` for words with a meaning or context that a one-line gloss would flatten. These are the words that can appear as the daily answer.
-- `guesses.json`: 627 accepted guesses total, including every answer word and 316 additional words that are accepted during play but never selected as the answer. Plain strings; no gloss. The runtime accepts the union of the two lists as legal guesses (627 words total).
+- `answers.json`: 366 entries. Every entry has a `word`, a part of speech (`pos`), a one-line English `gloss`, and an optional `note` for words with a meaning or context that a one-line gloss would flatten. These are the words that can appear as the daily answer.
+- `guesses.json`: 2,757 accepted guesses total, including every answer word and 2,391 additional documented forms that are accepted during play but never selected as the answer. Plain strings; no gloss. The runtime accepts the union of the two lists as legal guesses (2,757 words total).
 
 Both files are validated at build time by `scripts/validate-wordlists.mjs`: every entry has to be 5 lowercase a–z letters, no duplicates within a list, and every `answers.json` word must also appear in (or be unioned into) the guess set.
 
@@ -19,14 +19,14 @@ For a v1 daily word game, that is a defensible source. It also has to be stated 
 
 The author's published work on Filipino morphology, [Comparative Analysis of Tagalog Stemmers (PACLIC 38, Tokyo, 2024)](https://aclanthology.org/2024.paclic-1.64/), and the related `explorer.hapinas.net` lexical data project are the *motivation* for caring about a clean Tagalog dataset. They are not the source of the original launch strings.
 
-Future versions will integrate named external sources. Candidates, in roughly the order they would be incorporated:
+Ongoing additions use named external sources as candidate pools, not as automatic imports. Current and planned source pools:
 
-- Tagalog Wiktionary, restricted to entries marked as Tagalog and filtered to length-5 lemmas in modern Filipino orthography. Public, attributable, easy to diff against.
+- Tagalog Wiktionary, including the Kaikki.org postprocessed Tagalog extract, restricted to entries marked as Tagalog and filtered to length-5 forms in modern Filipino orthography. Public, attributable, easy to diff against.
 - KWF's *Diksiyonaryo ng Wikang Filipino* headword list, where the headwords are length-5 and freely citable. Authoritative for modern Filipino spelling.
 - The `explorer.hapinas.net` Tagalog lexical database, once its export is stable and its provenance is itself documented at the same level of detail as this file.
 - A `data/sources.json` registry so each answer can carry a per-entry source tag once the v2 lists exist.
 
-Until formal source tags land, the source for every shipped word in this repository is: reviewed by one Filipino speaker, sitting down with a text editor and accepting only words she is willing to defend.
+Until per-entry source tags land, the source for every shipped word in this repository is: reviewed by one Filipino speaker, sitting down with a text editor and accepting only words she is willing to defend.
 
 ## What each word had to meet
 
@@ -39,7 +39,9 @@ Every entry in `answers.json` had to satisfy all of these:
 - **One canonical spelling.** Where Tagalog tolerates spelling variants (e.g. `kotse` vs the older `coche`), the entry uses the form currently taught in Filipino-medium schools.
 - **A real English gloss.** Not a translation in scare quotes. If a word has no clean one-line English equivalent (`kilig`, `tampo`, `bayanihan`), the gloss says so and the `note` field gives the reader a real handhold.
 
-`guesses.json` is broader. It contains plausible 5-letter Tagalog words a player might reach for during play: common nouns, verbs, adjectives, particles, place names, naturalised loans, and a few common colloquial forms that did not make the daily-answer cut. Same orthographic constraints apply, but no `pos` and no gloss are required because these words never surface in the result modal.
+`guesses.json` is broader. It contains plausible 5-letter Tagalog words a player might reach for during play, plus documented Tagalog forms pulled from public lexical references: common nouns, verbs, adjectives, particles, inflected verb forms, naturalised loans, colloquial forms, specialist terms, and documented borrowings that did not make the daily-answer cut. Same orthographic constraints apply, but no `pos` and no gloss are required because these words never surface in the result modal.
+
+For the broad accepted-guess pass, entries were kept only when they had a Tagalog lexical entry, exactly five lowercase `a-z` letters, and at least one usable English gloss. Entries were filtered out when the usable sense was only an affix, symbol, phrase, proper name, romanisation, obsolete form, archaic form, rare form, dated form, historical form, neologism, alternative spelling, form-of entry, superseded spelling, misspelling, or nonstandard spelling. This is still not a perfect dictionary, but it is a much wider documented safety net for player guesses.
 
 ## What this list is not
 
@@ -59,7 +61,7 @@ The current review path is one person:
 2. The maintainer (Angelica) reads it, checks the spelling against the modern-orthography rule, and either accepts the suggestion, asks a question, or declines with a reason.
 3. Accepted entries go in via a small PR that updates the JSON files and re-runs the validator. The next deploy ships them.
 
-There is no automation and no batched intake yet. That is fine for the scale of suggestions a small launch attracts. If volume picks up, the path becomes a `data/suggestions.md` queue and weekly batches; until then, GitHub issues handle it.
+There is no automated merge path. Candidate gathering can use scripts or public extracts, but accepted entries still go through review before they land. If suggestion volume picks up, the path becomes a `data/suggestions.md` queue and weekly batches; until then, GitHub issues handle it.
 
 ## Stability of the rotation
 
@@ -75,5 +77,9 @@ Both of those are facts about the rotation, not the wordlist content. The contra
 Initial v1 list: 154 answers, 425 accepted guesses total (271 beyond the answer list). Hand-curated over a single weekend in May 2026 by [Angelica Naguio](https://angelicanaguio.com) ahead of the 30 May 2026 launch. All entries reviewed against the criteria above before commit.
 
 30 May 2026 expansion: 311 answers, 627 accepted guesses total (316 beyond the answer list). Added 157 researched daily-answer candidates and 45 accepted guess-only words, all reviewed against the same 5-letter, modern-orthography, everyday-play criteria.
+
+30 May 2026 vocabulary review: 366 answers, 674 accepted guesses total (308 beyond the answer list). Added 55 daily answers: 45 new answer entries plus 10 words promoted from accepted guesses. Added `ganon` and `ganun` as accepted guesses only, because they are common colloquial spellings of `ganoon` but are too casual for the daily-answer set. Candidate checks used Tagalog Wiktionary category data, Wiktionary entry pages, KWF/Pambansang Diksiyonaryo references where available, and manual speaker review. The answer count is now a full leap-year of unique daily puzzles before the rotation repeats.
+
+30 May 2026 documented-guess sweep: 366 answers, 2,757 accepted guesses total (2,391 beyond the answer list). Added 2,083 accepted guesses from the Kaikki.org Tagalog Wiktionary extract after filtering for documented Tagalog entries, five-letter modern orthography, and at least one usable gloss. The sweep deliberately did not add those words to `answers.json`; the daily answer list remains a fair-play list, while the guess list is allowed to be much wider.
 
 This document is the source of truth for "where do the words come from." If a contributor, journalist, recruiter, or curious player asks, point them here.

@@ -160,7 +160,7 @@ const en = {
       why:
         'There are more than eighty million Tagalog speakers. Wordle has been remade in so many languages that a Filipino one felt overdue. And my advocacy is to make Filipino languages fun.',
       selectiveBeforeLink:
-        'The list is small on purpose. I would rather be selective than let a fake or flimsy word slip in. If a word is missing,',
+        'The daily-answer list is selective on purpose. The accepted-guess list is much wider, but I would rather keep the daily words defensible than let a fake or flimsy word slip in. If a word is missing,',
       suggestionLink: 'open a suggestion',
       selectiveAfterLink:
         'with the word, what it means, its part of speech, and a source I can check.',
@@ -351,11 +351,11 @@ export const COPY = {
         knownGame:
           'Kilala na ng lahat ang laro: may limang letra, anim na subok, at bagong salita tuwing hatinggabi.',
         whyHeading: 'bakit larong salitang Tagalog',
-        why:
-          'Mahigit walumpung milyon ang nagsasalita ng Tagalog. Nagawan na ng Wordle sa napakaraming wika, kaya matagal nang bagay magkaroon ng bersiyong Filipino. At adbokasiya kong gawing masaya ang mga wika sa Pilipinas.',
-        selectiveBeforeLink:
-          'Maliit ang listahan, sinadya iyon. Mas gusto kong maging mapili kaysa makalusot ang gawa-gawa o alanganing salita. Kung may kulang na salita,',
-        suggestionLink: 'magsumite ng mungkahi',
+      why:
+        'Mahigit walumpung milyon ang nagsasalita ng Tagalog. Nagawan na ng Wordle sa napakaraming wika, kaya matagal nang bagay magkaroon ng bersiyong Filipino. At adbokasiya kong gawing masaya ang mga wika sa Pilipinas.',
+      selectiveBeforeLink:
+        'Mapili ang listahan ng pang-araw-araw na sagot, sinadya iyon. Mas malawak ang listahan ng tinatanggap na hula, pero mas gusto kong maging maingat kaysa makalusot ang gawa-gawa o alanganing salita. Kung may kulang na salita,',
+      suggestionLink: 'magsumite ng mungkahi',
         selectiveAfterLink:
           'kasama ang salita, ibig sabihin nito, bahagi ng pananalita, at sangguniang puwede kong tingnan.',
       },

@@ -8,7 +8,7 @@
 //
 // Bump CACHE_VERSION on each deploy to evict the previous cache.
 
-const CACHE_VERSION = 'hoolah-v1-20260530b';
+const CACHE_VERSION = 'hoolah-v1-20260530d';
 const APP_SHELL = ['/', '/about', '/rules', '/archive', '/manifest.webmanifest'];
 
 self.addEventListener('install', (event) => {
