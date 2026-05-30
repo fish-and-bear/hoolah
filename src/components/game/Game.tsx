@@ -478,9 +478,7 @@ export default function Game() {
         entry={entryByWord.get(snapshot.answer) ?? puzzle.entry}
         stats={stats}
         dark={dark}
-        onPlayFreeGame={
-          snapshot.mode === 'free' ? startFreeGame : startFreeGame
-        }
+        onPlayFreeGame={startFreeGame}
         newFreeGameLabel={snapshot.mode === 'free' ? 'Another word' : undefined}
       />
 
@@ -519,6 +517,6 @@ export default function Game() {
       />
 
       <Help open={helpOpen} onClose={() => setHelpOpen(false)} />
-    </>
+    </div>
   );
 }
