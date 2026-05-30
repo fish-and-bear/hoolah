@@ -1,0 +1,33 @@
+{
+  "name": "hoolah",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A daily Filipino word game. Five letters, six tries, one new word every day.",
+  "scripts": {
+    "dev": "node scripts/generate-icons.mjs && next dev",
+    "prebuild": "node scripts/generate-icons.mjs && node scripts/validate-wordlists.mjs",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "icons": "node scripts/generate-icons.mjs",
+    "validate": "node scripts/validate-wordlists.mjs"
+  },
+  "dependencies": {
+    "next": "15.5.2",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.14.0",
+    "@types/react": "19.0.0",
+    "@types/react-dom": "19.0.0",
+    "autoprefixer": "10.4.20",
+    "eslint": "8.57.0",
+    "eslint-config-next": "15.5.2",
+    "postcss": "8.4.49",
+    "sharp": "0.34.5",
+    "tailwindcss": "3.4.16",
+    "typescript": "5.6.3"
+  }
+}
