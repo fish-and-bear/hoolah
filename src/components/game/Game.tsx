@@ -139,6 +139,19 @@ function formatDateLong(date: string): string {
   });
 }
 
+// Soft haptic on guess submit, celebratory on win. iOS Safari does not
+// expose navigator.vibrate; this becomes a no-op there. Wrapped in a
+// try/catch because some Android skins throw on certain patterns.
+function haptic(pattern: number | number[]): void {
+  if (typeof navigator === 'undefined') return;
+  if (typeof navigator.vibrate !== 'function') return;
+  try {
+    navigator.vibrate(pattern);
+  } catch {
+    // ignored
+  }
+}
+
 export default function Game() {
   const [mounted, setMounted] = useState(false);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
@@ -281,11 +294,18 @@ export default function Game() {
         setSnapshot(nextSnapshot);
         setCurrent('');
 
+        // A 12ms tick on submit is short enough to feel like
+        // confirmation, not interruption.
+        haptic(12);
+
         window.setTimeout(() => {
           setRevealingRow(null);
           if (won) {
             setBouncingRow(rowIdx);
             window.setTimeout(() => setBouncingRow(null), 700);
+            // Celebratory triple-pulse on the win, only after the row
+            // finishes flipping so the haptic lines up with the bounce.
+            haptic([18, 60, 18, 60, 30]);
           }
           if (status !== 'in-progress') {
             // Daily-only AND only after the launch epoch: free-play games
