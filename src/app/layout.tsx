@@ -74,8 +74,11 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  // Allow user zoom up to 5x — there are no <input> elements on the
+  // page so the iOS Safari zoom-on-focus footgun does not apply, and
+  // locking out zoom is an a11y regression for low-vision players.
+  maximumScale: 5,
+  userScalable: true,
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#F4EDE3' },
     { media: '(prefers-color-scheme: dark)', color: '#0E0E0E' },

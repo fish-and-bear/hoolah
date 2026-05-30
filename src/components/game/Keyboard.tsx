@@ -25,11 +25,12 @@ export default function Keyboard({
   letterStates,
   disabled,
 }: KeyboardProps) {
-  // Physical keyboard handler.
+  // Physical keyboard handler. Kept tight: only what the active row
+  // needs, no per-key handler allocations, and `preventDefault` only
+  // when we actually consume the keystroke.
   useEffect(() => {
     function handler(e: KeyboardEvent) {
       if (disabled) return;
-      // Ignore when typing in an actual input/textarea (modal forms, etc.)
       const target = e.target as HTMLElement | null;
       if (
         target &&
@@ -39,7 +40,6 @@ export default function Keyboard({
       ) {
         return;
       }
-      // Don't swallow shortcut keys.
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -47,7 +47,7 @@ export default function Keyboard({
       } else if (e.key === 'Backspace') {
         e.preventDefault();
         onKey('back');
-      } else if (/^[a-zA-Z]$/.test(e.key)) {
+      } else if (e.key.length === 1 && /^[a-zA-Z]$/.test(e.key)) {
         e.preventDefault();
         onKey(e.key.toLowerCase());
       }
@@ -89,18 +89,25 @@ export default function Keyboard({
                 onClick={() => onKey(key)}
                 aria-label={label}
                 aria-disabled={disabled ? 'true' : 'false'}
-                className="select-none touch-manipulation rounded-[4px] font-semibold text-sm sm:text-base"
+                className="hoolah-key select-none touch-manipulation rounded-[4px] font-semibold text-sm sm:text-base"
+                data-action={isAction ? 'true' : undefined}
+                data-state={state ?? undefined}
                 style={{
                   flex: isAction ? '1.4 1 0' : '1 1 0',
                   minWidth: 0,
+                  // dvh-friendly clamp keeps the 3-row keyboard inside
+                  // ~32% of the available height on the smallest phones
+                  // while staying comfy on a tablet.
                   height: 'clamp(48px, 9vw, 58px)',
                   background: bg,
                   color,
                   border: 0,
-                  transition: 'background-color 80ms linear',
+                  transition:
+                    'background-color 80ms linear, transform 80ms ease-out',
                   textTransform: key === 'enter' ? 'lowercase' : 'none',
                   letterSpacing: key === 'enter' ? '0.05em' : 'normal',
                   cursor: disabled ? 'default' : 'pointer',
+                  WebkitTapHighlightColor: 'transparent',
                 }}
               >
                 {display}

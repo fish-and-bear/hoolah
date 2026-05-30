@@ -75,6 +75,21 @@ body {
   /* Prevent the iOS rubber-band scroll exposing white behind the dark
      theme. */
   background-color: var(--hoolah-bg);
+  /* Disable pull-to-refresh so swiping down inside a long modal does
+     not accidentally reload the page. `contain` keeps native scrolling
+     inside scrollable regions while blocking the bounce-at-top reload. */
+  overscroll-behavior-y: contain;
+  /* The default 300ms tap-highlight on mobile is jarring against the
+     warm palette; replace with a subtle accent tint. */
+  -webkit-tap-highlight-color: rgba(91, 14, 17, 0.12);
+}
+
+html {
+  /* Lock the document to dvh so iOS Safari's collapsing URL bar does
+     not let the page jump when the bar hides. The board, keyboard,
+     and modal layout all assume a stable viewport height. */
+  height: 100%;
+  height: 100dvh;
 }
 
 body {
@@ -86,6 +101,9 @@ body {
      home-bar indicator. */
   padding: env(safe-area-inset-top) env(safe-area-inset-right)
     env(safe-area-inset-bottom) env(safe-area-inset-left);
+  /* Tappable surfaces opt out of double-tap zoom; the per-key class on
+     the on-screen keyboard repeats this for safety. */
+  touch-action: manipulation;
 }
 
 a {
@@ -103,11 +121,37 @@ a:focus-visible {
 
 button {
   font-family: inherit;
+  /* Prevent the on-screen keyboard keys from triggering text selection
+     on long-press, which on mobile Safari otherwise pops the magnifier
+     and breaks rapid-fire typing. */
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
 }
 
 *:focus-visible {
   outline: 2px solid var(--hoolah-accent);
   outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Subtle, instant press feedback on the on-screen keyboard. No colour
+   change on press (the row colours are reserved for letter state); just
+   a scale-down and a brightness nudge so the key reads as "received". */
+.hoolah-key {
+  user-select: none;
+  -webkit-user-select: none;
+}
+.hoolah-key:not(:disabled):active {
+  transform: scale(0.94);
+  filter: brightness(0.95);
+}
+.hoolah-key[data-action='true'] {
+  /* Action keys (enter, backspace) get a slightly heavier weight and
+     a softer corner radius so they read as distinct from letter keys
+     without needing a separate colour. */
+  font-weight: 700;
+  border-radius: 6px;
 }
 
 .wordmark {
