@@ -5,6 +5,7 @@ import RegisterSW from '@/components/pwa/RegisterSW';
 import {
   CREATOR_URL,
   OG_IMAGE,
+  SEO_AUDIENCE_DESCRIPTION,
   SEO_DESCRIPTION,
   SEO_TITLE,
   SITE_CREATOR,
@@ -150,6 +151,8 @@ export default function RootLayout({
                   '@id': `${SITE_URL}/#website`,
                   name: SITE_NAME,
                   alternateName: [
+                    'Open-source Filipino Wordle',
+                    'Open-source Tagalog Wordle',
                     'Filipino Wordle',
                     'Tagalog Wordle',
                     'Filipino word game',
@@ -159,12 +162,18 @@ export default function RootLayout({
                   url: SITE_URL,
                   inLanguage: ['en', 'fil', 'tl'],
                   publisher: { '@id': `${SITE_URL}/#creator` },
+                  audience: {
+                    '@type': 'Audience',
+                    audienceType: SEO_AUDIENCE_DESCRIPTION,
+                  },
                 },
                 {
                   '@type': ['Game', 'WebApplication'],
                   '@id': `${SITE_URL}/#game`,
                   name: SITE_NAME,
                   alternateName: [
+                    'open-source Filipino Wordle-style game',
+                    'open-source Tagalog Wordle-style game',
                     'Filipino Wordle-style game',
                     'Tagalog Wordle-style game',
                     'daily Filipino word game',
@@ -176,6 +185,7 @@ export default function RootLayout({
                   genre: ['Word game', 'Educational game'],
                   learningResourceType: 'game',
                   teaches: ['Tagalog vocabulary', 'Filipino vocabulary'],
+                  educationalUse: SEO_AUDIENCE_DESCRIPTION,
                   author: { '@id': `${SITE_URL}/#creator` },
                   inLanguage: ['en', 'fil', 'tl'],
                   isAccessibleForFree: true,

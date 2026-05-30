@@ -4,10 +4,13 @@ export const SITE_CREATOR = 'Angelica Naguio';
 export const CREATOR_URL = 'https://angelicanaguio.com';
 
 export const SEO_TITLE =
-  'hoolah: Filipino Wordle-Style Tagalog Word Game';
+  'hoolah: Open-Source Filipino Wordle-Style Game';
 
 export const SEO_DESCRIPTION =
-  'Play hoolah, a daily Filipino Wordle-style game for Tagalog learners. Five letters, six tries, one new Tagalog word at midnight.';
+  'hoolah is an open-source Filipino Wordle-style game. Guess one five-letter Tagalog word each day, then learn what it means and how it is used.';
+
+export const SEO_AUDIENCE_DESCRIPTION =
+  'Made for Filipino speakers, learners, and anyone who wants a small daily Tagalog vocabulary habit with no ads, accounts, or tracking.';
 
 export const OG_IMAGE = {
   url: '/opengraph-image',
