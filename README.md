@@ -6,15 +6,14 @@ Live site: [hoolah.hapinas.net](https://hoolah.hapinas.net)
 
 ## What this is
 
-Wordle, in Tagalog. The mechanic is the one you already know. The contribution is the vocabulary: a hand-reviewed list of everyday Filipino words, every answer verified, with English glosses shown after each round so the game doubles as quiet language practice.
+Wordle, in Tagalog.
 
-Built as a real product, not a demo. It is a Progressive Web App, runs entirely in the browser, ships zero analytics and zero third-party scripts, and works offline once installed.
+It is a Progressive Web App, which runs entirely in the browser, has zero analytics and zero third-party scripts, and works offline once installed.
 
 ## What is inside
 
 - Next.js 15 App Router with `output: 'export'`, so the whole site builds to a static folder
 - Tailwind CSS for layout and components
-- An EB Garamond italic wordmark on an oxblood, ivory, ink and gold palette
 - Deterministic, client-side daily-word selection (seeded permutation, no server needed)
 - localStorage-backed game state, stats, settings, and streak
 - Local-midnight daily reset, hard mode, dark mode, reduced-motion mode, keyboard control, screen-reader announcements
@@ -68,7 +67,7 @@ The daily word changes at the player's local midnight. Before the app advances t
 
 The answer list (`src/data/answers.json`) is hand-reviewed Tagalog: 366 entries, each with a part of speech and a one-line English gloss. The acceptable-guess list (`src/data/guesses.json`) contains 2,757 accepted 5-letter Tagalog guesses total, including every answer word and 2,391 additional documented forms a player might reach for during play. Latin alphabet, lowercase a-z only; no ñ, no diacritics, for v1 simplicity.
 
-The full provenance, criteria, and contribution path are documented in [docs/CORPUS.md](./docs/CORPUS.md). Read that before opening an issue to suggest a word.
+The full provenance, criteria, and contribution path are documented in [docs/CORPUS.md](./docs/CORPUS.md).
 
 ## Deployment
 
@@ -77,10 +76,6 @@ See [DEPLOY.md](./DEPLOY.md).
 ## Contributing and Security
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup and word-suggestion rules. Please report vulnerabilities privately; see [SECURITY.md](./SECURITY.md).
-
-## A note on the name
-
-There is a dormant Singapore-based buy-now-pay-later brand also called Hoolah, acquired by ShopBack in 2021. Negligible risk of confusion with a Filipino word game in a different category and region; the maintainer has been informed and decided to proceed.
 
 ## License
 
