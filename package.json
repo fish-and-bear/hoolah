@@ -35,7 +35,7 @@
     "ci": "pnpm run validate && pnpm run test && pnpm run typecheck && pnpm run lint && pnpm run build"
   },
   "dependencies": {
-    "next": "15.5.18",
+    "next": "16.2.6",
     "react": "19.2.6",
     "react-dom": "19.2.6"
   },
@@ -46,7 +46,7 @@
     "@types/react-dom": "19.2.3",
     "autoprefixer": "10.5.0",
     "eslint": "9.39.4",
-    "eslint-config-next": "15.5.18",
+    "eslint-config-next": "16.2.6",
     "postcss": "8.5.15",
     "serve": "14.2.6",
     "sharp": "0.34.5",
